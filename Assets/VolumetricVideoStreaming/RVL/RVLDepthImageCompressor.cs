@@ -1,0 +1,129 @@
+﻿//
+// This code is licensed under the MIT License.
+//
+// This is a modified version of the RVL source code from 
+// Fast Lossless Depth Image Compression (A. D. Wilson, 2017).
+//
+// The original RVL source code is available in Wilson's paper.
+//
+// A. D. Wilson. (2017). Fast Lossless Depth Image Compression. 
+// https://dl.acm.org/doi/pdf/10.1145/3132272.3134144
+// https://www.microsoft.com/en-us/research/uploads/prod/2018/09/p100-wilson.pdf
+//
+
+using System;
+
+namespace RVL
+{
+    public class RVLDepthImageCompressor
+    {
+        public static int CompressRVL(ushort[] input, byte[] output)
+        {
+            int bufferLength = output.Length / sizeof(int);
+            int[] _buffer = new int[bufferLength];
+            int _bufferCounter = 0;
+
+            int _word = 0;
+            int _nibblesWritten = 0;
+            ushort previous = 0;
+
+            int index = 0;
+            while (index < input.Length)
+            {
+                int zeros = 0, nonzeros = 0;
+                for (; (index < input.Length) && (input[index] == 0); index++, zeros++);
+                EncodeVLE(zeros, _buffer, ref _bufferCounter, ref _word, ref _nibblesWritten); // number of zeros
+                for (int p = index; (p < input.Length) && (input[p++] != 0); nonzeros++);
+                EncodeVLE(nonzeros, _buffer, ref _bufferCounter, ref _word, ref _nibblesWritten); // number of nonzeros
+                for (int i = 0; i < nonzeros; i++)
+                {
+                    ushort current = input[index++];
+                    int delta = current - previous;
+                    int positive = (delta << 1) ^ (delta >> 31);
+                    EncodeVLE(positive, _buffer, ref _bufferCounter, ref _word, ref _nibblesWritten); // nonzero value
+                    previous = current;
+                }
+            }
+            if (_nibblesWritten != 0) // last few values
+            {
+                _buffer[_bufferCounter++] = _word << 4 * (8 - _nibblesWritten);
+            }
+
+            Buffer.BlockCopy(_buffer, 0, output, 0, _buffer.Length * sizeof(int));
+            int numBytes = _bufferCounter * sizeof(int);
+            return numBytes;
+        }
+
+        public static void DecompressRVL(byte[] input, ushort[] output)
+        {
+            int bufferLength = input.Length / sizeof(int);
+            int[] _buffer = new int[bufferLength];
+
+            Buffer.BlockCopy(input, 0, _buffer, 0, input.Length * sizeof(byte));
+            int _bufferCounter = 0;
+
+            int _word = 0;
+            int _nibblesWritten = 0;
+            ushort current, previous = 0;
+
+            int index = 0;
+            int numPixelsToDecode = output.Length; // num pixels
+            while (numPixelsToDecode != 0)
+            {
+                int zeros = DecodeVLE(_buffer, ref _bufferCounter, ref _word, ref _nibblesWritten); // number of zeros
+                numPixelsToDecode -= zeros;
+                for (; (zeros != 0); zeros--)
+                {
+                    output[index++] = 0;
+                }
+                int nonzeros = DecodeVLE(_buffer, ref _bufferCounter, ref _word, ref _nibblesWritten); // number of nonzeros
+                numPixelsToDecode -= nonzeros;
+                for (; (nonzeros != 0); nonzeros--)
+                {
+                    int positive = DecodeVLE(_buffer, ref _bufferCounter, ref _word, ref _nibblesWritten); // nonzero value
+                    int delta = (positive >> 1) ^ -(positive & 1);
+                    current = (ushort)(previous + delta);
+                    output[index++] = current;
+                    previous = current;
+                }
+            }
+        }
+
+        private static void EncodeVLE(int value, int[] _buffer, ref int _bufferCounter, ref int _word, ref int _nibblesWritten)
+        {
+            do
+            {
+                int nibble = value & 0x7; // lower 3 bits
+                if ((value >>= 3) != 0) nibble |= 0x8; // more to come
+                _word <<= 4;
+                _word |= nibble;
+                if (++_nibblesWritten == 8) // output word
+                {
+                    _buffer[_bufferCounter++] = _word;
+                    _nibblesWritten = 0;
+                    _word = 0;
+                }
+            } while (value != 0);
+        }
+
+        private static int DecodeVLE(int[] _buffer, ref int _bufferCounter, ref int _word, ref int _nibblesWritten)
+        {
+            uint nibble;
+            int value = 0, bits = 29;
+            do
+            {
+                if (_nibblesWritten == 0)
+                {
+                    _word = _buffer[_bufferCounter++]; // load word
+                    _nibblesWritten = 8;
+                }
+                nibble = (uint)(_word & 0xf0000000);
+                value |= (int)((nibble << 1) >> bits);
+                _word <<= 4;
+                _nibblesWritten--;
+                bits -= 3;
+            } while ((nibble & 0x80000000) != 0);
+            return value;
+        }
+    }
+}
