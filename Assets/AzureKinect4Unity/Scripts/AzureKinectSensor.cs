@@ -17,6 +17,8 @@ namespace AzureKinect4Unity
         private Calibration _DeviceCalibration;
         private Transformation _Transformation;
         private bool _IsCameraStarted = false;
+        public bool KeyFrame = false;
+        private int _FrameCount = 0;
 
         private int _ColorImageWidth;
         public int ColorImageWidth { get { return _ColorImageWidth; } }
@@ -108,6 +110,8 @@ namespace AzureKinect4Unity
                 {
                     _RawDepthImage = capture.Depth.GetPixels<ushort>().ToArray();
                     _TransformedDepthImage = _Transformation.DepthImageToColorCamera(capture).GetPixels<ushort>().ToArray();
+
+                    KeyFrame = (_FrameCount++ % 30 == 0);
                 }
 
                 capture.Dispose();
