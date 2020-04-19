@@ -18,18 +18,18 @@ namespace TemporalRVL
 {
     struct Pixel
     {
-        public ushort value;
-        public ushort invalidCound;
+        public short value;
+        public short invalidCound;
     };
 
     public class TemporalRVLDepthStreamEncoder
     {
         Pixel[] _Pixels;
-        ushort _ChangeThreshold;
+        short _ChangeThreshold;
         int _InvalidThreshold;
         byte[] _EncodedFrame;
 
-        public TemporalRVLDepthStreamEncoder(int frameSize, ushort changeThreshold, int invalidThreshold)
+        public TemporalRVLDepthStreamEncoder(int frameSize, short changeThreshold, int invalidThreshold)
         {
             _Pixels = new Pixel[frameSize];
             _ChangeThreshold = changeThreshold;
@@ -37,7 +37,7 @@ namespace TemporalRVL
             _EncodedFrame = new byte[frameSize];
         }
 
-        public byte[] Encode(ushort[] depthBuffer, bool keyFrame)
+        public byte[] Encode(short[] depthBuffer, bool keyFrame)
         {
             int frameSize = _Pixels.Length;
 
@@ -49,7 +49,7 @@ namespace TemporalRVL
                 for (int i = 0; i < _Pixels.Length; i++)
                 {
                     _Pixels[i].value = depthBuffer[i];
-                    _Pixels[i].invalidCound = (ushort)((depthBuffer[i] == 0) ? 1 : 0);
+                    _Pixels[i].invalidCound = (short)((depthBuffer[i] == 0) ? 1 : 0);
                 }
 
                 encodedDataBytes = RVLDepthImageCompressor.CompressRVL(depthBuffer, encodedFrame);
@@ -57,12 +57,12 @@ namespace TemporalRVL
                 return encodedFrame;
             }
 
-            ushort[] pixelDiffs = new ushort[frameSize];
+            short[] pixelDiffs = new short[frameSize];
             for (int i = 0; i < pixelDiffs.Length; i++)
             {
                 pixelDiffs[i] = _Pixels[i].value;
                 UpdatePixel(ref _Pixels[i], depthBuffer[i], _ChangeThreshold, _InvalidThreshold);
-                pixelDiffs[i] = (ushort)(_Pixels[i].value - pixelDiffs[i]);
+                pixelDiffs[i] = (short)(_Pixels[i].value - pixelDiffs[i]);
             }
 
             encodedDataBytes = RVLDepthImageCompressor.CompressRVL(pixelDiffs, encodedFrame);
@@ -70,7 +70,7 @@ namespace TemporalRVL
             return encodedFrame;
         }
 
-        private void UpdatePixel(ref Pixel pixel, ushort rawValue, ushort changeThreshold, int invalidationThreshold)
+        private void UpdatePixel(ref Pixel pixel, short rawValue, short changeThreshold, int invalidationThreshold)
         {
             if (pixel.value == 0)
             {
@@ -101,26 +101,25 @@ namespace TemporalRVL
             }
         }
 
-        private ushort AbsDiff(ushort x, ushort y)
+        private short AbsDiff(short x, short y)
         {
-            if (x > y) { return (ushort)(x - y); }
-            else { return (ushort)(y - x); }
+            if (x > y) { return (short)(x - y); }
+            else { return (short)(y - x); }
         }
     }
 
-
     public class TemporalRVLDepthStreamDecoder
     {
-        ushort[] _PreviousPixelValues;
-        ushort[] _PixelDiffs;
+        short[] _PreviousPixelValues;
+        short[] _PixelDiffs;
 
         public TemporalRVLDepthStreamDecoder(int frameSize)
         {
-            _PreviousPixelValues = new ushort[frameSize];
-            _PixelDiffs = new ushort[frameSize];
+            _PreviousPixelValues = new short[frameSize];
+            _PixelDiffs = new short[frameSize];
         }
 
-        public ushort[] Decode(byte[] trvlEncodedFrame, bool keyFrame)
+        public short[] Decode(byte[] trvlEncodedFrame, bool keyFrame)
         {
             int frameSize = _PreviousPixelValues.Length;
             if (keyFrame)

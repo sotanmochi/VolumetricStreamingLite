@@ -17,7 +17,7 @@ namespace RVL
 {
     public class RVLDepthImageCompressor
     {
-        public static int CompressRVL(ushort[] input, byte[] output)
+        public static int CompressRVL(short[] input, byte[] output)
         {
             int bufferLength = output.Length / sizeof(int);
             int[] _buffer = new int[bufferLength];
@@ -25,7 +25,7 @@ namespace RVL
 
             int _word = 0;
             int _nibblesWritten = 0;
-            ushort previous = 0;
+            short previous = 0;
 
             int index = 0;
             while (index < input.Length)
@@ -37,7 +37,7 @@ namespace RVL
                 EncodeVLE(nonzeros, _buffer, ref _bufferCounter, ref _word, ref _nibblesWritten); // number of nonzeros
                 for (int i = 0; i < nonzeros; i++)
                 {
-                    ushort current = input[index++];
+                    short current = input[index++];
                     int delta = current - previous;
                     int positive = (delta << 1) ^ (delta >> 31);
                     EncodeVLE(positive, _buffer, ref _bufferCounter, ref _word, ref _nibblesWritten); // nonzero value
@@ -54,7 +54,7 @@ namespace RVL
             return numBytes;
         }
 
-        public static void DecompressRVL(byte[] input, ushort[] output)
+        public static void DecompressRVL(byte[] input, short[] output)
         {
             int bufferLength = input.Length / sizeof(int);
             int[] _buffer = new int[bufferLength];
@@ -64,7 +64,7 @@ namespace RVL
 
             int _word = 0;
             int _nibblesWritten = 0;
-            ushort current, previous = 0;
+            short current, previous = 0;
 
             int index = 0;
             int numPixelsToDecode = output.Length; // num pixels
@@ -82,7 +82,7 @@ namespace RVL
                 {
                     int positive = DecodeVLE(_buffer, ref _bufferCounter, ref _word, ref _nibblesWritten); // nonzero value
                     int delta = (positive >> 1) ^ -(positive & 1);
-                    current = (ushort)(previous + delta);
+                    current = (short)(previous + delta);
                     output[index++] = current;
                     previous = current;
                 }

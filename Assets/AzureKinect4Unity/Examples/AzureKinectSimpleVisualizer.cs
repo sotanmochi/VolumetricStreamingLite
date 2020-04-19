@@ -72,7 +72,7 @@ namespace AzureKinect4Unity
 
             if (_KinectSensor.RawDepthImage != null)
             {
-                ushort[] depthImage = _KinectSensor.RawDepthImage;
+                short[] depthImage = _KinectSensor.RawDepthImage;
                 Buffer.BlockCopy(depthImage, 0, _DepthRawData, 0, _DepthRawData.Length);
                 _DepthImageTexture.LoadRawTextureData(_DepthRawData);
                 _DepthImageTexture.Apply();
@@ -80,7 +80,7 @@ namespace AzureKinect4Unity
 
             if (_KinectSensor.TransformedDepthImage != null)
             {
-                ushort[] depthImage = _KinectSensor.TransformedDepthImage;
+                short[] depthImage = _KinectSensor.TransformedDepthImage;
                 Buffer.BlockCopy(depthImage, 0, _TransformedDepthRawData, 0, _TransformedDepthRawData.Length);
                 _TransformedDepthImageTexture.LoadRawTextureData(_TransformedDepthRawData);
                 _TransformedDepthImageTexture.Apply();

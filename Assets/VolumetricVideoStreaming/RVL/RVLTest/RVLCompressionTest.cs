@@ -17,15 +17,15 @@ namespace RVL.Test
 
             System.Diagnostics.Stopwatch stopwatch = new System.Diagnostics.Stopwatch();
 
-            ushort[] input = new ushort[size];
+            short[] input = new short[size];
             byte[] encoded = new byte[size];
-            ushort[] decoded = new ushort[size];
+            short[] decoded = new short[size];
 
             for (int i = 0; i < input.Length; i++)
             {
-                input[i] = (ushort)(0 + i);
+                input[i] = (short)(0 + i);
             }
-            int inputDataBytes = (input.Length * sizeof(ushort));
+            int inputDataBytes = (input.Length * sizeof(short));
 
             Debug.Log("********************");
             Debug.Log(" Input data size: " + inputDataBytes + " [bytes]");
@@ -70,15 +70,15 @@ namespace RVL.Test
 
             System.Diagnostics.Stopwatch stopwatch = new System.Diagnostics.Stopwatch();
 
-            ushort[] input = new ushort[size];
+            short[] input = new short[size];
             byte[] encoded = new byte[size];
-            ushort[] decoded = new ushort[size];
+            short[] decoded = new short[size];
 
             for (int i = 0; i < input.Length; i++)
             {
-                input[i] = (ushort)(0 + i);
+                input[i] = (short)(0 + i);
             }
-            int inputDataBytes = (input.Length * sizeof(ushort));
+            int inputDataBytes = (input.Length * sizeof(short));
 
             Debug.Log("********************");
             Debug.Log(" Input data size: " + inputDataBytes + " [bytes]");

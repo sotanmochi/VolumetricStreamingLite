@@ -23,8 +23,8 @@ namespace RVL.Test
         AzureKinectSensor _KinectSensor;
         byte[] _DepthRawData;
         byte[] _EncodedDepthData;
-        ushort[] _DecodedDepthData;
-        ushort[] _Diff;
+        short[] _DecodedDepthData;
+        short[] _Diff;
 
         void Start()
         {
@@ -32,10 +32,10 @@ namespace RVL.Test
             if (_KinectSensor != null)
             {
                 int depthImageSize = _KinectSensor.DepthImageWidth * _KinectSensor.DepthImageHeight;
-                _DepthRawData = new byte[depthImageSize * sizeof(ushort)];
+                _DepthRawData = new byte[depthImageSize * sizeof(short)];
                 _EncodedDepthData = new byte[depthImageSize];
-                _DecodedDepthData = new ushort[depthImageSize];
-                _Diff = new ushort[depthImageSize];
+                _DecodedDepthData = new short[depthImageSize];
+                _Diff = new short[depthImageSize];
 
                 _DepthImageTexture = new Texture2D(_KinectSensor.DepthImageWidth, _KinectSensor.DepthImageHeight, TextureFormat.R16, false);
                 _DecodedDepthImageTexture = new Texture2D(_KinectSensor.DepthImageWidth, _KinectSensor.DepthImageHeight, TextureFormat.R16, false);
@@ -61,7 +61,7 @@ namespace RVL.Test
                 Debug.Log("ColorResolution: " + _KinectSensor.ColorImageWidth + "x" + _KinectSensor.ColorImageHeight);
                 Debug.Log("DepthResolution: " + _KinectSensor.DepthImageWidth + "x" + _KinectSensor.DepthImageHeight);
 
-                int numBytes = depthImageSize * sizeof(ushort);
+                int numBytes = depthImageSize * sizeof(short);
                 Debug.Log("********************");
                 Debug.Log(" Depth image data size: " + numBytes + " [bytes]");
                 Debug.Log("********************");
@@ -73,7 +73,7 @@ namespace RVL.Test
             if (_KinectSensor.RawDepthImage != null)
             {
                 // Visualize original depth image
-                ushort[] depthImage = _KinectSensor.RawDepthImage;
+                short[] depthImage = _KinectSensor.RawDepthImage;
                 Buffer.BlockCopy(depthImage, 0, _DepthRawData, 0, _DepthRawData.Length * sizeof(byte));
                 _DepthImageTexture.LoadRawTextureData(_DepthRawData);
                 _DepthImageTexture.Apply();
@@ -82,7 +82,7 @@ namespace RVL.Test
                 int encodedDataBytes = RVLDepthImageCompressor.CompressRVL(depthImage, _EncodedDepthData);
                 Debug.Log("********************");
                 Debug.Log(" Encoded data size: " + encodedDataBytes + " [bytes]");
-                Debug.Log(" Compression ratio: " + ((float) (depthImage.Length * sizeof(ushort)) / encodedDataBytes));
+                Debug.Log(" Compression ratio: " + ((float) (depthImage.Length * sizeof(short)) / encodedDataBytes));
                 Debug.Log("********************");
 
                 // RVL decompression
@@ -96,7 +96,7 @@ namespace RVL.Test
                 // Diff
                 for (int i = 0; i < depthImage.Length; i++)
                 {
-                    _Diff[i] = (ushort)Math.Abs(depthImage[i] - _DecodedDepthData[i]);
+                    _Diff[i] = (short)Math.Abs(depthImage[i] - _DecodedDepthData[i]);
                 }
 
                 // Visualize diff image

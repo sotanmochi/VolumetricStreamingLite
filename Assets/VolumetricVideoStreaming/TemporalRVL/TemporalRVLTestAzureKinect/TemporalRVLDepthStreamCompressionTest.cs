@@ -23,12 +23,14 @@ namespace TemporalRVL.Test
         AzureKinectSensor _KinectSensor;
         byte[] _DepthRawData;
         byte[] _EncodedDepthData;
-        ushort[] _DecodedDepthData;
-        ushort[] _Diff;
+        short[] _DecodedDepthData;
+        short[] _Diff;
 
         TemporalRVLDepthStreamEncoder _Encoder;
         TemporalRVLDepthStreamDecoder _Decoder;
         System.Diagnostics.Stopwatch _Stopwatch = new System.Diagnostics.Stopwatch();
+
+        int _FrameCount = 0;
 
         void Start()
         {
@@ -38,8 +40,8 @@ namespace TemporalRVL.Test
                 int depthImageSize = _KinectSensor.DepthImageWidth * _KinectSensor.DepthImageHeight;
                 _DepthRawData = new byte[depthImageSize * sizeof(ushort)];
                 _EncodedDepthData = new byte[depthImageSize];
-                _DecodedDepthData = new ushort[depthImageSize];
-                _Diff = new ushort[depthImageSize];
+                _DecodedDepthData = new short[depthImageSize];
+                _Diff = new short[depthImageSize];
 
                 _DepthImageTexture = new Texture2D(_KinectSensor.DepthImageWidth, _KinectSensor.DepthImageHeight, TextureFormat.R16, false);
                 _DecodedDepthImageTexture = new Texture2D(_KinectSensor.DepthImageWidth, _KinectSensor.DepthImageHeight, TextureFormat.R16, false);
@@ -80,15 +82,17 @@ namespace TemporalRVL.Test
             if (_KinectSensor.RawDepthImage != null)
             {
                 // Visualize original depth image
-                ushort[] depthImage = _KinectSensor.RawDepthImage;
+                short[] depthImage = _KinectSensor.RawDepthImage;
                 Buffer.BlockCopy(depthImage, 0, _DepthRawData, 0, _DepthRawData.Length * sizeof(byte));
                 _DepthImageTexture.LoadRawTextureData(_DepthRawData);
                 _DepthImageTexture.Apply();
 
+                bool keyFrame = (_FrameCount++ % 30 == 0);
+
                 _Stopwatch.Start();
 
                 // Temporal RVL compression
-                _EncodedDepthData = _Encoder.Encode(depthImage, _KinectSensor.KeyFrame);
+                _EncodedDepthData = _Encoder.Encode(depthImage, keyFrame);
 
                 _Stopwatch.Stop();
                 Debug.Log("********************");
@@ -101,7 +105,7 @@ namespace TemporalRVL.Test
                 _Stopwatch.Start();
 
                 // Temporal RVL decompression
-                _DecodedDepthData = _Decoder.Decode(_EncodedDepthData, _KinectSensor.KeyFrame);
+                _DecodedDepthData = _Decoder.Decode(_EncodedDepthData, keyFrame);
 
                 _Stopwatch.Stop();
                 Debug.Log("********************");
@@ -116,7 +120,7 @@ namespace TemporalRVL.Test
                 // Diff
                 for (int i = 0; i < depthImage.Length; i++)
                 {
-                    _Diff[i] = (ushort)Math.Abs(depthImage[i] - _DecodedDepthData[i]);
+                    _Diff[i] = (short)Math.Abs(depthImage[i] - _DecodedDepthData[i]);
                 }
 
                 // Visualize diff image

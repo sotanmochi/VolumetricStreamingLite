@@ -17,8 +17,6 @@ namespace AzureKinect4Unity
         private Calibration _DeviceCalibration;
         private Transformation _Transformation;
         private bool _IsCameraStarted = false;
-        public bool KeyFrame = false;
-        private int _FrameCount = 0;
 
         private int _ColorImageWidth;
         public int ColorImageWidth { get { return _ColorImageWidth; } }
@@ -33,10 +31,10 @@ namespace AzureKinect4Unity
         public byte[] RawColorImage { get { return _RawColorImage; } }
         private byte[] _TransformedColorImage = null;
         public byte[] TransformedColorImage { get { return _TransformedColorImage; } }
-        private ushort[] _RawDepthImage = null;
-        public ushort[] RawDepthImage { get { return _RawDepthImage; } }
-        private ushort[] _TransformedDepthImage = null;
-        public ushort[] TransformedDepthImage { get { return _TransformedDepthImage; } }
+        private short[] _RawDepthImage = null;
+        public short[] RawDepthImage { get { return _RawDepthImage; } }
+        private short[] _TransformedDepthImage = null;
+        public short[] TransformedDepthImage { get { return _TransformedDepthImage; } }
 
         public void OpenSensor(int deviceIndex = 0)
         {
@@ -78,8 +76,8 @@ namespace AzureKinect4Unity
 
             _RawColorImage = new byte[_ColorImageWidth * _ColorImageHeight * 4];
             _TransformedColorImage = new byte[_DepthImageWidth * _DepthImageHeight * 4];
-            _RawDepthImage = new ushort[_DepthImageWidth * _DepthImageHeight];
-            _TransformedDepthImage = new ushort[_ColorImageWidth * _ColorImageHeight];
+            _RawDepthImage = new short[_DepthImageWidth * _DepthImageHeight];
+            _TransformedDepthImage = new short[_ColorImageWidth * _ColorImageHeight];
         }
 
         public void CloseSensor()
@@ -108,10 +106,8 @@ namespace AzureKinect4Unity
 
                 if (capture.Depth != null)
                 {
-                    _RawDepthImage = capture.Depth.GetPixels<ushort>().ToArray();
-                    _TransformedDepthImage = _Transformation.DepthImageToColorCamera(capture).GetPixels<ushort>().ToArray();
-
-                    KeyFrame = (_FrameCount++ % 30 == 0);
+                    _RawDepthImage = capture.Depth.GetPixels<short>().ToArray();
+                    _TransformedDepthImage = _Transformation.DepthImageToColorCamera(capture).GetPixels<short>().ToArray();
                 }
 
                 capture.Dispose();

@@ -571,7 +571,6 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 1646135969}
-  - component: {fileID: 1646135971}
   - component: {fileID: 1646135970}
   m_Layer: 0
   m_Name: RVLDepthImageCompressionTest
@@ -608,28 +607,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   _AzureKinectManager: {fileID: 858880385}
   _DepthVisualizer: {fileID: 4800000, guid: ea9d8c86bbe2a7f4b9a437f75dd25491, type: 3}
-  _DiffVisualizer: {fileID: 4800000, guid: 7d988569583f6054c8e185c5fc1ee7a3, type: 3}
-  _UnlitTextureMaterial: {fileID: 2100000, guid: 0b63389eb779fd941b943ecdaf178218,
-    type: 2}
-  _DepthImageObject: {fileID: 1243524581}
-  _DecodedDepthImageObject: {fileID: 980420454}
-  _DiffImageObject: {fileID: 1642710243}
-  _ColorImageObject: {fileID: 1869656033}
---- !u!114 &1646135971
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1646135968}
-  m_Enabled: 0
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 8b375b66f0d0377428b3f969bacf8e76, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  _AzureKinectManager: {fileID: 858880385}
-  _DepthVisualizer: {fileID: 4800000, guid: ea9d8c86bbe2a7f4b9a437f75dd25491, type: 3}
-  _DiffVisualizer: {fileID: 4800000, guid: 7d988569583f6054c8e185c5fc1ee7a3, type: 3}
+  _DiffVisualizer: {fileID: 4800000, guid: ea9d8c86bbe2a7f4b9a437f75dd25491, type: 3}
   _UnlitTextureMaterial: {fileID: 2100000, guid: 0b63389eb779fd941b943ecdaf178218,
     type: 2}
   _DepthImageObject: {fileID: 1243524581}
