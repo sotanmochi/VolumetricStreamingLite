@@ -15,6 +15,8 @@ namespace AzureKinect4Unity
         public Device Device { get { return _KinectSensor; } }
 
         private Calibration _DeviceCalibration;
+        public Calibration DeviceCalibration { get { return _DeviceCalibration; } }
+
         private Transformation _Transformation;
         private bool _IsCameraStarted = false;
 
@@ -35,6 +37,9 @@ namespace AzureKinect4Unity
         public short[] RawDepthImage { get { return _RawDepthImage; } }
         private short[] _TransformedDepthImage = null;
         public short[] TransformedDepthImage { get { return _TransformedDepthImage; } }
+
+        private Short3[] _PointCloud = null;
+        public Short3[] PointCloud { get { return _PointCloud; } }
 
         public void OpenSensor(int deviceIndex = 0)
         {
@@ -73,11 +78,6 @@ namespace AzureKinect4Unity
             CameraCalibration depthCamera = _DeviceCalibration.DepthCameraCalibration;
             _DepthImageWidth = depthCamera.ResolutionWidth;
             _DepthImageHeight = depthCamera.ResolutionHeight;
-
-            _RawColorImage = new byte[_ColorImageWidth * _ColorImageHeight * 4];
-            _TransformedColorImage = new byte[_DepthImageWidth * _DepthImageHeight * 4];
-            _RawDepthImage = new short[_DepthImageWidth * _DepthImageHeight];
-            _TransformedDepthImage = new short[_ColorImageWidth * _ColorImageHeight];
         }
 
         public void CloseSensor()
@@ -106,8 +106,14 @@ namespace AzureKinect4Unity
 
                 if (capture.Depth != null)
                 {
-                    _RawDepthImage = capture.Depth.GetPixels<short>().ToArray();
-                    _TransformedDepthImage = _Transformation.DepthImageToColorCamera(capture).GetPixels<short>().ToArray();
+                    Image depthImage = capture.Depth;
+                    Image transformedDepthImage = _Transformation.DepthImageToColorCamera(capture);
+
+                    _RawDepthImage = depthImage.GetPixels<short>().ToArray();
+                    _TransformedDepthImage = transformedDepthImage.GetPixels<short>().ToArray();
+
+                    _PointCloud = _Transformation.DepthImageToPointCloud(transformedDepthImage, CalibrationDeviceType.Color)
+                                                 .GetPixels<Short3>().ToArray();
                 }
 
                 capture.Dispose();
