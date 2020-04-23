@@ -23,6 +23,9 @@ Assets/Plugins/*
 # ======================================= #
 # Third party assets (Not ignored assets)
 # ======================================= #
+!Assets/KinectViewer/
+!Assets/KinectViewer.meta
+
 !Assets/Plugins/AzureKinectSDK.1.4.0/
 !Assets/Plugins/AzureKinectSDK.1.4.0.meta
 
