@@ -4,7 +4,7 @@
 using UnityEngine;
 using UnityEngine.Rendering;
 
-namespace VolumetricVideoStreaming
+namespace VolumetricVideoLiveStreaming
 {
     [RequireComponent(typeof(MeshFilter), typeof(MeshRenderer))]
     public class PointCloudRenderer : MonoBehaviour

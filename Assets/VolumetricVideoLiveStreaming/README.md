@@ -1,4 +1,4 @@
-# Volumetric Video Streaming
+# Volumetric Video Live Streaming
 
 ## Tested environment
 - Unity 2018.4.21f1

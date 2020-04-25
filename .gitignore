@@ -17,8 +17,8 @@ Assets/Plugins/*
 !Assets/AzureKinect4Unity/
 !Assets/AzureKinect4Unity.meta
 
-!Assets/VolumetricVideoStreaming/
-!Assets/VolumetricVideoStreaming.meta
+!Assets/VolumetricVideoLiveStreaming/
+!Assets/VolumetricVideoLiveStreaming.meta
 
 # ======================================= #
 # Third party assets (Not ignored assets)
