@@ -17,15 +17,38 @@ namespace K4A
             return true;
         }
 
+        public static bool GetExtrinsicTransformation(in CalibrationExtrinsics worldToSource, in CalibrationExtrinsics worldToTarget, ref CalibrationExtrinsics sourceToTarget)
+        {
+            CalibrationExtrinsics sourceToWorld = new CalibrationExtrinsics();
+            ExtrinsicsInvert(worldToSource, ref sourceToWorld);
+            ExtrinsicsMult(worldToTarget, sourceToWorld, ref sourceToTarget);
+            return true;
+        }
+
         public static void ExtrinsicsTransformPoint3(in CalibrationExtrinsics sourceToTarget, in float[] x, ref float[] y)
         {        
             float a = x[0], b = x[1], c = x[2];
-            float[] R = sourceToTarget.rotation;
+            float[][] R = sourceToTarget.rotation;
             float[] t = sourceToTarget.translation;
 
-            y[0] = R[0] * a + R[1] * b + R[2] * c + t[0];
-            y[1] = R[3] * a + R[4] * b + R[5] * c + t[1];
-            y[2] = R[6] * a + R[7] * b + R[8] * c + t[2];
+            y[0] = R[0][0] * a + R[0][1] * b + R[0][2] * c + t[0];
+            y[1] = R[1][0] * a + R[1][1] * b + R[1][2] * c + t[1];
+            y[2] = R[2][0] * a + R[2][1] * b + R[2][2] * c + t[2];
+        }
+
+        public static void ExtrinsicsInvert(in CalibrationExtrinsics x, ref CalibrationExtrinsics xinv)
+        {
+            Math.Transpose3x3(x.rotation, ref xinv.rotation);
+            Math.MultAx3x3(xinv.rotation, x.translation, ref xinv.translation);
+            Math.Negate3(xinv.translation, ref xinv.translation);
+        }
+
+        public static void ExtrinsicsMult(in CalibrationExtrinsics a, in CalibrationExtrinsics b, ref CalibrationExtrinsics ab)
+        {
+            float[] Rt = new float[3];
+            Math.MultAx3x3(a.rotation, b.translation, ref Rt);
+            Math.Add3(Rt, a.translation, ref ab.translation);
+            Math.MultAB3x3x3(a.rotation, b.rotation, ref ab.rotation);
         }
     }
 }

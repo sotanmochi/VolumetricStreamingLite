@@ -56,7 +56,10 @@ namespace K4A
 
     public class CalibrationExtrinsics
     {
-        public float[] rotation = new float[9]; /**< 3x3 Rotation matrix stored in row major order */
-        public float[] translation = new float[3]; /**< Translation vector, x,y,z (in millimeters) */
+        /**< 3x3 Rotation matrix stored in row major order */
+        public float[][] rotation = new float[3][]{ new float[3], new float[3], new float[3]};
+
+        /**< Translation vector, x,y,z (in millimeters) */
+        public float[] translation = new float[3];
     }
 }
