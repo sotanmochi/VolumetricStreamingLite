@@ -23,44 +23,6 @@ namespace VolumetricVideoLiveStreaming
             _KinectSensor = _AzureKinectManager.Sensor;
             if (_KinectSensor != null)
             {
-                CameraCalibration calibration = _KinectSensor.DeviceCalibration.ColorCameraCalibration;
-                float[] parameters = calibration.Intrinsics.Parameters;
-
-                AzureKinectCalibration.Intrinsics intrinsics = new AzureKinectCalibration.Intrinsics();
-                intrinsics.cx = parameters[0];
-                intrinsics.cy = parameters[1];
-                intrinsics.fx = parameters[2];
-                intrinsics.fy = parameters[3];
-                intrinsics.k1 = parameters[4];
-                intrinsics.k2 = parameters[5];
-                intrinsics.k3 = parameters[6];
-                intrinsics.k4 = parameters[7];
-                intrinsics.k5 = parameters[8];
-                intrinsics.k6 = parameters[9];
-                intrinsics.codx = parameters[10];
-                intrinsics.cody = parameters[11];
-                intrinsics.p2 = parameters[12]; // p2: tangential distortion coefficient y
-                intrinsics.p1 = parameters[13]; // p1: tangential distortion coefficient x
-                intrinsics.metricRadius = parameters[14];
-
-                Debug.Log("***** Camera parameters *****");
-                Debug.Log(" Intrinsics.cx: " + intrinsics.cx);
-                Debug.Log(" Intrinsics.cy: " + intrinsics.cy);
-                Debug.Log(" Intrinsics.fx: " + intrinsics.fx);
-                Debug.Log(" Intrinsics.fy: " + intrinsics.fy);
-                Debug.Log(" Intrinsics.k1: " + intrinsics.k1);
-                Debug.Log(" Intrinsics.k2: " + intrinsics.k2);
-                Debug.Log(" Intrinsics.k3: " + intrinsics.k3);
-                Debug.Log(" Intrinsics.k4: " + intrinsics.k4);
-                Debug.Log(" Intrinsics.k5: " + intrinsics.k5);
-                Debug.Log(" Intrinsics.k6: " + intrinsics.k6);
-                Debug.Log(" Intrinsics.codx: " + intrinsics.codx);
-                Debug.Log(" Intrinsics.cody: " + intrinsics.cody);
-                Debug.Log(" Intrinsics.p2: " + intrinsics.p2);
-                Debug.Log(" Intrinsics.p1: " + intrinsics.p1);
-                Debug.Log(" Intrinsics.metricRadius: " + intrinsics.metricRadius);
-                Debug.Log("*****************************");
-
                 Debug.Log("ColorResolution: " + _KinectSensor.ColorImageWidth + "x" + _KinectSensor.ColorImageHeight);
                 Debug.Log("DepthResolution: " + _KinectSensor.DepthImageWidth + "x" + _KinectSensor.DepthImageHeight);
 
@@ -70,7 +32,53 @@ namespace VolumetricVideoLiveStreaming
                 _TransformedDepthImageTexture = new Texture2D(_KinectSensor.ColorImageWidth, _KinectSensor.ColorImageHeight, TextureFormat.R16, false);
 
                 _PointCloudRenderer = GetComponent<PointCloudRenderer>();
-                _PointCloudRenderer.GenerateMesh(_KinectSensor.ColorImageWidth, _KinectSensor.ColorImageHeight, intrinsics, calibration.MetricRadius);
+
+                CameraCalibration deviceColorCameraCalibration = _KinectSensor.DeviceCalibration.ColorCameraCalibration;
+                float[] parameters = deviceColorCameraCalibration.Intrinsics.Parameters;
+
+                K4A.CalibrationCamera cameraCalibration = new K4A.CalibrationCamera();
+                cameraCalibration.resolutionWidth = _KinectSensor.ColorImageWidth;
+                cameraCalibration.resolutionHeight = _KinectSensor.ColorImageHeight;
+                cameraCalibration.metricRadius = deviceColorCameraCalibration.MetricRadius;
+                cameraCalibration.intrinsics.cx = parameters[0];
+                cameraCalibration.intrinsics.cy = parameters[1];
+                cameraCalibration.intrinsics.fx = parameters[2];
+                cameraCalibration.intrinsics.fy = parameters[3];
+                cameraCalibration.intrinsics.k1 = parameters[4];
+                cameraCalibration.intrinsics.k2 = parameters[5];
+                cameraCalibration.intrinsics.k3 = parameters[6];
+                cameraCalibration.intrinsics.k4 = parameters[7];
+                cameraCalibration.intrinsics.k5 = parameters[8];
+                cameraCalibration.intrinsics.k6 = parameters[9];
+                cameraCalibration.intrinsics.codx = parameters[10];
+                cameraCalibration.intrinsics.cody = parameters[11];
+                cameraCalibration.intrinsics.p2 = parameters[12]; // p2: tangential distortion coefficient y
+                cameraCalibration.intrinsics.p1 = parameters[13]; // p1: tangential distortion coefficient x
+                cameraCalibration.intrinsics.metricRadius = parameters[14];
+
+                Debug.Log("***** Camera parameters *****");
+                Debug.Log(" Intrinsics.cx: " + cameraCalibration.intrinsics.cx);
+                Debug.Log(" Intrinsics.cy: " + cameraCalibration.intrinsics.cy);
+                Debug.Log(" Intrinsics.fx: " + cameraCalibration.intrinsics.fx);
+                Debug.Log(" Intrinsics.fy: " + cameraCalibration.intrinsics.fy);
+                Debug.Log(" Intrinsics.k1: " + cameraCalibration.intrinsics.k1);
+                Debug.Log(" Intrinsics.k2: " + cameraCalibration.intrinsics.k2);
+                Debug.Log(" Intrinsics.k3: " + cameraCalibration.intrinsics.k3);
+                Debug.Log(" Intrinsics.k4: " + cameraCalibration.intrinsics.k4);
+                Debug.Log(" Intrinsics.k5: " + cameraCalibration.intrinsics.k5);
+                Debug.Log(" Intrinsics.k6: " + cameraCalibration.intrinsics.k6);
+                Debug.Log(" Intrinsics.codx: " + cameraCalibration.intrinsics.codx);
+                Debug.Log(" Intrinsics.cody: " + cameraCalibration.intrinsics.cody);
+                Debug.Log(" Intrinsics.p2: " + cameraCalibration.intrinsics.p2);
+                Debug.Log(" Intrinsics.p1: " + cameraCalibration.intrinsics.p1);
+                Debug.Log(" Intrinsics.metricRadius: " + cameraCalibration.intrinsics.metricRadius);
+                Debug.Log(" MetricRadius: " + cameraCalibration.metricRadius);
+                Debug.Log("*****************************");
+
+                K4A.Calibration calibration = new K4A.Calibration();
+                calibration.ColorCameraCalibration = cameraCalibration;
+
+                _PointCloudRenderer.GenerateMesh(calibration, K4A.CalibrationType.Color);
             }
         }
 
