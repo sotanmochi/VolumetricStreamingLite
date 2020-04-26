@@ -17,6 +17,9 @@ Assets/Plugins/*
 !Assets/AzureKinect4Unity/
 !Assets/AzureKinect4Unity.meta
 
+!Assets/K4ATransformation/
+!Assets/K4ATransformation.meta
+
 !Assets/VolumetricVideoLiveStreaming/
 !Assets/VolumetricVideoLiveStreaming.meta
 
