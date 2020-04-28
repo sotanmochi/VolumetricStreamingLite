@@ -8,6 +8,7 @@ namespace AzureKinect4Unity
 {
     public class AzureKinectSensor : MonoBehaviour
     {
+        public ImageFormat ColorImageFormat = ImageFormat.ColorBGRA32;
         public ColorCameraMode ColorCameraMode = ColorCameraMode._1920_x_1080_30fps;
         public DepthCameraMode DepthCameraMode = DepthCameraMode._512_x_512_30fps;
 
@@ -51,7 +52,7 @@ namespace AzureKinect4Unity
             }
 
             DeviceConfiguration kinectConfig = new DeviceConfiguration();
-            kinectConfig.ColorFormat = ImageFormat.ColorBGRA32;
+            kinectConfig.ColorFormat = ColorImageFormat;
             kinectConfig.ColorResolution = (ColorResolution) ColorCameraMode;
             kinectConfig.DepthMode = (DepthMode) DepthCameraMode;
 
