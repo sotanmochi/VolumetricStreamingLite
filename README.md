@@ -34,6 +34,9 @@ The following assets are included in this project.
   Licensed under the Apache License 2.0. Copyright (c) Amazon.com, Inc. or its affiliates.  
   This product includes software developed by Amazon Technologies, Inc (http://www.amazon.com/).
 
+- [UniRx (Ver 7.1.0)](https://github.com/neuecc/UniRx/releases/tag/7.1.0)  
+  Licensed under the MIT License. Copyright (c) 2018 Yoshifumi Kawai.
+
 ## License
 このプロジェクトは、サードパーティのアセットを除き、MIT Licenseでライセンスされています。  
 This project is licensed under the MIT License excluding third party assets.
