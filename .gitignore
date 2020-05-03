@@ -26,9 +26,6 @@ Assets/Plugins/*
 # ======================================= #
 # Third party assets (Not ignored assets)
 # ======================================= #
-!Assets/KinectViewer/
-!Assets/KinectViewer.meta
-
 !Assets/Plugins/AzureKinectSDK.1.4.0/
 !Assets/Plugins/AzureKinectSDK.1.4.0.meta
 
@@ -43,6 +40,9 @@ Assets/Plugins/*
 
 !Assets/Plugins/System.Runtime.CompilerServices.Unsafe.4.5.2/
 !Assets/Plugins/System.Runtime.CompilerServices.Unsafe.4.5.2.meta
+
+!Assets/LiteNetLib-0.8.3/
+!Assets/LiteNetLib-0.8.3.meta
 
 #
 # This .gitignore file should be placed at the root of your Unity project directory

@@ -27,6 +27,9 @@ The following assets are included in this project.
 - System.Runtime.CompilerServices.Unsafe.4.5.2  
   Licensed under the MIT License. Copyright (c) .NET Foundation and Contributors.  
 
+- [LiteNetLib 0.8.3](https://github.com/RevenantX/LiteNetLib/releases/tag/v0.8.3)  
+  Licensed under the MIT License. Copyright (c) Ruslan Pyrch.
+
 ## License
 このプロジェクトは、サードパーティのアセットを除き、MIT Licenseでライセンスされています。  
 This project is licensed under the MIT License excluding third party assets.
