@@ -27,12 +27,6 @@ The following assets are included in this project.
 - System.Runtime.CompilerServices.Unsafe.4.5.2  
   Licensed under the MIT License. Copyright (c) .NET Foundation and Contributors.  
 
-- AzureKinectCalibration.cs
-  Licensed under the Apache License, Version 2.0. Copyright 2019 Hanseul Jun.
-
-- AzureKinectIntrinsicTransformation.cs
-  Licensed under the Apache License, Version 2.0. Copyright 2019 Hanseul Jun.
-
 ## License
 このプロジェクトは、サードパーティのアセットを除き、MIT Licenseでライセンスされています。  
 This project is licensed under the MIT License excluding third party assets.
