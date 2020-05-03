@@ -44,6 +44,9 @@ Assets/Plugins/*
 !Assets/LiteNetLib-0.8.3/
 !Assets/LiteNetLib-0.8.3.meta
 
+!Assets/Plugins/GameLift-CSharp-ServerSDK-3.4.0/
+!Assets/Plugins/GameLift-CSharp-ServerSDK-3.4.0.meta
+
 #
 # This .gitignore file should be placed at the root of your Unity project directory
 #
