@@ -47,9 +47,6 @@ Assets/Plugins/*
 !Assets/Plugins/GameLift-CSharp-ServerSDK-3.4.0/
 !Assets/Plugins/GameLift-CSharp-ServerSDK-3.4.0.meta
 
-!Assets/Plugins/UniRx/
-!Assets/Plugins/UniRx.meta
-
 #
 # This .gitignore file should be placed at the root of your Unity project directory
 #
