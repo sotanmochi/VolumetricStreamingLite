@@ -52,9 +52,17 @@ namespace VolumetricVideoStreaming.Server.LiteNetLib
             if (reader.UserDataSize >= 4)
             {
                 NetworkDataType networkDataType = (NetworkDataType)reader.GetInt();
-                if (networkDataType == NetworkDataType.SendTexture)
+                if (networkDataType == NetworkDataType.SendCalibration)
                 {
-                    SendTextureToReceivers(peer.Id, reader);
+                    SendCalibrationToReceivers(peer.Id, reader);
+                }
+                if (networkDataType == NetworkDataType.SendDepthData)
+                {
+                    SendDepthDataToReceivers(peer.Id, reader);
+                }
+                if (networkDataType == NetworkDataType.SendDepthAndColorData)
+                {
+                    SendDepthAndColorDataToReceivers(peer.Id, reader);
                 }
                 else if (networkDataType == NetworkDataType.RegisterTextureReceiver)
                 {
@@ -67,23 +75,89 @@ namespace VolumetricVideoStreaming.Server.LiteNetLib
             }
         }
 
-        void SendTextureToReceivers(int streamingClientId, NetPacketReader reader)
+        void SendCalibrationToReceivers(int streamingClientId, NetPacketReader reader)
         {
-            int frameCount = reader.GetInt();
-            int width = reader.GetInt();
-            int height = reader.GetInt();
-            int textureDataLength = reader.GetInt();
+            Debug.Log("SendCalibration: " + reader.UserDataSize);
 
-            byte[] rawTextureData = new byte[textureDataLength];
-            reader.GetBytes(rawTextureData, textureDataLength);
+            int dataLength = reader.GetInt();
+            byte[] serializedCalibration = new byte[dataLength];
+            reader.GetBytes(serializedCalibration, dataLength);
 
             _dataWriter.Reset();
-            _dataWriter.Put((int)NetworkDataType.ReceiveTexture);
+            _dataWriter.Put((int)NetworkDataType.ReceiveCalibration);
+            _dataWriter.Put(serializedCalibration.Length);
+            _dataWriter.Put(serializedCalibration);
+
+            foreach (int receiverClientId in _streamingReceivers[streamingClientId])
+            {
+                _liteNetLibServer.SendData(receiverClientId, _dataWriter, DeliveryMethod.ReliableOrdered);
+            }
+        }
+
+        void SendDepthDataToReceivers(int streamingClientId, NetPacketReader reader)
+        {
+            // Debug.Log("SendDepthData: " + reader.UserDataSize);
+
+            int frameCount = reader.GetInt();
+            bool isKeyFrame = reader.GetBool();
+            int depthWidth = reader.GetInt();
+            int depthHeight = reader.GetInt();
+
+            CompressionMethod compressionMethod = (CompressionMethod)reader.GetInt();
+            int encodedDepthDataLength = reader.GetInt();
+            byte[] encodedDepthData = new byte[encodedDepthDataLength];
+            reader.GetBytes(encodedDepthData, encodedDepthDataLength);
+
+            _dataWriter.Reset();
+            _dataWriter.Put((int)NetworkDataType.ReceiveDepthData);
             _dataWriter.Put(frameCount);
-            _dataWriter.Put(width);
-            _dataWriter.Put(height);
-            _dataWriter.Put(rawTextureData.Length);
-            _dataWriter.Put(rawTextureData);
+            _dataWriter.Put(isKeyFrame);
+            _dataWriter.Put(depthWidth);
+            _dataWriter.Put(depthHeight);
+            _dataWriter.Put((int)compressionMethod);
+            _dataWriter.Put(encodedDepthData.Length);
+            _dataWriter.Put(encodedDepthData);
+
+            foreach (int receiverClientId in _streamingReceivers[streamingClientId])
+            {
+                _liteNetLibServer.SendData(receiverClientId, _dataWriter, DeliveryMethod.ReliableOrdered);
+            }
+        }
+
+        void SendDepthAndColorDataToReceivers(int streamingClientId, NetPacketReader reader)
+        {
+            // Debug.Log("SendDepthAndColorData: " + reader.UserDataSize);
+
+            int frameCount = reader.GetInt();
+            bool isKeyFrame = reader.GetBool();
+            int depthWidth = reader.GetInt();
+            int depthHeight = reader.GetInt();
+
+            CompressionMethod compressionMethod = (CompressionMethod)reader.GetInt();
+            int encodedDepthDataLength = reader.GetInt();
+            byte[] encodedDepthData = new byte[encodedDepthDataLength];
+            reader.GetBytes(encodedDepthData, encodedDepthDataLength);
+
+            int colorWidth = reader.GetInt();
+            int colorHeight = reader.GetInt();
+
+            int colorImageDataLength = reader.GetInt();
+            byte[] colorImageData = new byte[colorImageDataLength];
+            reader.GetBytes(colorImageData, colorImageDataLength);
+
+            _dataWriter.Reset();
+            _dataWriter.Put((int)NetworkDataType.ReceiveDepthAndColorData);
+            _dataWriter.Put(frameCount);
+            _dataWriter.Put(isKeyFrame);
+            _dataWriter.Put(depthWidth);
+            _dataWriter.Put(depthHeight);
+            _dataWriter.Put((int)compressionMethod);
+            _dataWriter.Put(encodedDepthData.Length);
+            _dataWriter.Put(encodedDepthData);
+            _dataWriter.Put(colorWidth);
+            _dataWriter.Put(colorHeight);
+            _dataWriter.Put(colorImageData.Length);
+            _dataWriter.Put(colorImageData);
 
             foreach (int receiverClientId in _streamingReceivers[streamingClientId])
             {

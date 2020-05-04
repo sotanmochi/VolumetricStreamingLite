@@ -39,12 +39,13 @@ namespace VolumetricVideoStreaming.Client
         TemporalRVLDepthStreamDecoder _Decoder;
 
         ITextureStreamingClient _TextureStreamingClient;
-        float _IntervalTimeSeconds = 100;
+        float _IntervalTimeSeconds = 0.01f;
         int _KeyFrameInterval = 0;
-        int _FrameCount = 0;
         float _Timer = 0.0f;
         bool _Initialized = false;
         bool _Streaming = false;
+        int _FrameCount = 0;
+        bool _KeyFrame = false;
 
         public void Initialize(ITextureStreamingClient textureStreamingClient)
         {
@@ -125,10 +126,10 @@ namespace VolumetricVideoStreaming.Client
                 _DepthImageTexture.LoadRawTextureData(_DepthRawData);
                 _DepthImageTexture.Apply();
 
-                bool keyFrame = (_FrameCount++ % _KeyFrameInterval == 0);
+                _KeyFrame = (_FrameCount++ % _KeyFrameInterval == 0);
 
                 // Temporal RVL compression
-                _EncodedDepthData = _Encoder.Encode(depthImage, keyFrame);
+                _EncodedDepthData = _Encoder.Encode(depthImage, _KeyFrame);
                 _CompressedDepthDataSize = _EncodedDepthData.Length;
                 // RVL compression
                 // _CompressedDepthDataSize = RVLDepthImageCompressor.CompressRVL(depthImage, _EncodedDepthData);
@@ -137,7 +138,7 @@ namespace VolumetricVideoStreaming.Client
                 _CompressionRatio = ((float) _OriginalDepthDataSize / _CompressedDepthDataSize);
 
                 // Temporal RVL decompression
-                _DecodedDepthData = _Decoder.Decode(_EncodedDepthData, keyFrame);
+                _DecodedDepthData = _Decoder.Decode(_EncodedDepthData, _KeyFrame);
                 // RVL decompression
                 // RVLDepthImageCompressor.DecompressRVL(_EncodedDepthData, _DecodedDepthData);
 
@@ -165,13 +166,12 @@ namespace VolumetricVideoStreaming.Client
                 _EncodedColorImageData = ImageConversion.EncodeToJPG(_ColorImageTexture);
                 _CompressedColorDataSize = _EncodedColorImageData.Length;
             }
-            // if (_KinectSensor.RawColorImage != null)
-            // {
-            //     _ColorImageTexture.LoadRawTextureData(_KinectSensor.RawColorImage);
-            //     _ColorImageTexture.Apply();
-            //     _EncodedColorImageData = ImageConversion.EncodeToJPG(_ColorImageTexture);
-            //     _CompressedColorDataSize = _EncodedColorImageData.Length;
-            // }
+
+            // _TextureStreamingClient.SendDepthData(CompressionMethod.TemporalRVL, _EncodedDepthData, 
+            //                                       _KinectSensor.DepthImageWidth, _KinectSensor.DepthImageHeight, _KeyFrame, _FrameCount);
+            _TextureStreamingClient.SendDepthAndColorData(CompressionMethod.TemporalRVL, _EncodedDepthData, 
+                                                          _KinectSensor.DepthImageWidth, _KinectSensor.DepthImageHeight, _KeyFrame,
+                                                          _EncodedColorImageData, _ColorImageTexture.width, _ColorImageTexture.height, _FrameCount);
         }
     }
 }

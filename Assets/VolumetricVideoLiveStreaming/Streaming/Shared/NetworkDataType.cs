@@ -4,9 +4,12 @@ namespace LiteNetLibExtension
     public enum NetworkDataType
     {
         ReceiveOwnCliendId,
-
-        SendTexture,
-        ReceiveTexture,
+        SendCalibration,
+        ReceiveCalibration,
+        SendDepthData,
+        ReceiveDepthData,
+        SendDepthAndColorData,
+        ReceiveDepthAndColorData,
         RegisterTextureReceiver,
         UnregisterTextureReceiver,
     }

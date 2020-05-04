@@ -67,6 +67,10 @@ namespace LiteNetLibExtension
             {
                 _serverPeer.Send(dataWriter, deliveryMethod);
             }
+            else
+            {
+                Debug.LogError("Could not send data! Server peer is null!");
+            }
         }
 
         void INetEventListener.OnPeerConnected(NetPeer peer)

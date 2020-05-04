@@ -1,4 +1,6 @@
-﻿using UnityEngine;
+﻿using System.IO;
+using System.Runtime.Serialization.Formatters.Binary;
+using UnityEngine;
 using LiteNetLib;
 using LiteNetLib.Utils;
 using LiteNetLibExtension;
@@ -9,16 +11,24 @@ namespace VolumetricVideoStreaming.Client.LiteNetLib
     {
         [SerializeField] LiteNetLibClientMain _liteNetLibClient;
 
+        public K4A.Calibration Calibration { get; private set; }
         public int FrameCount { get; private set; }
-        public int Width { get; private set; }
-        public int Height { get; private set; }
-        public byte[] RawTextureData { get; private set;  }
+        public bool IsKeyFrame { get; private set; }
+        public int DepthWidth { get; private set; }
+        public int DepthHeight { get; private set; }
+        public int DepthImageSize { get; private set; }
+        public CompressionMethod CompressionMethod { get; private set; }
+        public byte[] EncodedDepthData { get; private set;  }
+        public int ColorWidth { get; private set; }
+        public int ColorHeight { get; private set; }
+        public byte[] ColorImageData { get; private set;  }
 
         NetDataWriter _dataWriter;
         public int ClientId { get; private set; }
 
         void Awake()
         {
+            FrameCount = -1;
             ClientId = -1;
             _dataWriter = new NetDataWriter();
             _liteNetLibClient.OnNetworkReceived += OnNetworkReceived;
@@ -46,32 +56,105 @@ namespace VolumetricVideoStreaming.Client.LiteNetLib
                     ClientId = reader.GetInt();
                     Debug.Log("Own Client ID : " + ClientId);
                 }
-                else if (networkDataType == NetworkDataType.ReceiveTexture)
+                else if (networkDataType == NetworkDataType.ReceiveCalibration)
                 {
-                    OnReceivedRawTextureData(peer, reader);
+                    OnReceivedCalibration(peer, reader);
+                }
+                else if (networkDataType == NetworkDataType.ReceiveDepthData)
+                {
+                    OnReceivedDepthData(peer, reader);
+                }
+                else if (networkDataType == NetworkDataType.ReceiveDepthAndColorData)
+                {
+                    OnReceivedDepthAndColorData(peer, reader);
                 }
             }
         }
 
-        void OnReceivedRawTextureData(NetPeer peer, NetPacketReader reader)
+        void OnReceivedCalibration(NetPeer peer, NetPacketReader reader)
         {
-            int frameCount = reader.GetInt();
-            int width = reader.GetInt();
-            int height = reader.GetInt();
+            int dataLength = reader.GetInt();
+            byte[] serializedCalibration = new byte[dataLength];
+            reader.GetBytes(serializedCalibration, dataLength);
 
-            int textureDataLength = reader.GetInt();
-            byte[] rawTextureData = new byte[textureDataLength];
-            reader.GetBytes(rawTextureData, textureDataLength);
+            BinaryFormatter binaryFormatter = new BinaryFormatter();
+            MemoryStream memoryStream = new MemoryStream(serializedCalibration);
 
-            OnReceivedRawTextureData(frameCount, width, height, rawTextureData);
+            K4A.Calibration calibration = (K4A.Calibration)binaryFormatter.Deserialize(memoryStream);
+            OnReceivedCalibration(calibration);
         }
 
-        public void OnReceivedRawTextureData(int frameCount, int width, int height, byte[] rawTextureData)
+        void OnReceivedDepthData(NetPeer peer, NetPacketReader reader)
+        {
+            int frameCount = reader.GetInt();
+            bool isKeyFrame = reader.GetBool();
+            int depthWidth = reader.GetInt();
+            int depthHeight = reader.GetInt();
+
+            CompressionMethod compressionMethod = (CompressionMethod)reader.GetInt();
+            int encodedDepthDataLength = reader.GetInt();
+            byte[] encodedDepthData = new byte[encodedDepthDataLength];
+            reader.GetBytes(encodedDepthData, encodedDepthDataLength);
+
+            OnReceivedDepthData(frameCount, isKeyFrame, depthWidth, depthHeight, compressionMethod, encodedDepthData);
+        }
+
+        void OnReceivedDepthAndColorData(NetPeer peer, NetPacketReader reader)
+        {
+            int frameCount = reader.GetInt();
+            bool isKeyFrame = reader.GetBool();
+            int depthWidth = reader.GetInt();
+            int depthHeight = reader.GetInt();
+
+            CompressionMethod compressionMethod = (CompressionMethod)reader.GetInt();
+            int encodedDepthDataLength = reader.GetInt();
+            byte[] encodedDepthData = new byte[encodedDepthDataLength];
+            reader.GetBytes(encodedDepthData, encodedDepthDataLength);
+
+            int colorWidth = reader.GetInt();
+            int colorHeight = reader.GetInt();
+
+            int colorImageDataLength = reader.GetInt();
+            byte[] colorImageData = new byte[colorImageDataLength];
+            reader.GetBytes(colorImageData, colorImageDataLength);
+
+            OnReceivedDepthAndColorData(frameCount, isKeyFrame, depthWidth, depthHeight, compressionMethod, encodedDepthData,
+                                        colorWidth, colorHeight, colorImageData);
+        }
+
+        public void OnReceivedCalibration(K4A.Calibration calibration)
+        {
+            Calibration = calibration;
+        }
+
+        public void OnReceivedDepthData(int frameCount, bool isKeyFrame, int depthWidth, int depthHeight, 
+                                        CompressionMethod compressionMethod, byte[] encodedDepthData)
         {
             FrameCount = frameCount;
-            Width = width;
-            Height = height;
-            RawTextureData = rawTextureData;
+            IsKeyFrame = isKeyFrame;
+            DepthWidth = depthWidth;
+            DepthHeight = depthHeight;
+            CompressionMethod = compressionMethod;
+            EncodedDepthData = encodedDepthData;
+
+            DepthImageSize = depthWidth * DepthHeight;
+        }
+
+        public void OnReceivedDepthAndColorData(int frameCount, bool isKeyFrame, int depthWidth, int depthHeight,
+                                                CompressionMethod compressionMethod, byte[] encodedDepthData, 
+                                                int colorWidth, int colorHeight, byte[] colorImageData)
+        {
+            FrameCount = frameCount;
+            IsKeyFrame = isKeyFrame;
+            DepthWidth = depthWidth;
+            DepthHeight = depthHeight;
+            CompressionMethod = compressionMethod;
+            EncodedDepthData = encodedDepthData;
+            ColorWidth = colorWidth;
+            ColorHeight = colorHeight;
+            ColorImageData = colorImageData;
+
+            DepthImageSize = depthWidth * DepthHeight;
         }
 
         public void RegisterTextureReceiver(int streamingClientId)

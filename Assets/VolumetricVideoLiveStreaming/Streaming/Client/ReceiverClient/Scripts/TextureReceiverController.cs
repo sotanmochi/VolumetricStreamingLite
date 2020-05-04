@@ -5,12 +5,15 @@ namespace VolumetricVideoStreaming.Client
 {
     public class TextureReceiverController : MonoBehaviour
     {
+        [SerializeField] VolumetricVideoReceiverService _volumetricVideoReceiverService;
         [SerializeField] GameObject _textureReceiverClientObject;
         ITextureReceiverClient _textureReceiverClient;
 
-        [SerializeField] bool _useSkybox;
+        [SerializeField] Shader _DepthVisualizer;
+        [SerializeField] Material _UnlitTextureMaterial;
+        [SerializeField] GameObject _DepthImageObject;
+        [SerializeField] GameObject _ColorImageObject;
 
-        [SerializeField] RawImage _rawImage;
         [SerializeField] Text _clientIdText;
         [SerializeField] InputField _serverAddress;
         [SerializeField] InputField _serverPort;
@@ -20,58 +23,38 @@ namespace VolumetricVideoStreaming.Client
         [SerializeField] Button _registerReceiver;
         [SerializeField] Button _unregisterReceiver;
 
-        Texture2D _textureData;
-        Material _skyboxMaterial;
         int _previousStreamingClientId;
+        Texture2D _DepthImageTexture;
+        MeshRenderer _DepthMeshRenderer;
+        Texture2D _ColorImageTexture;
+        MeshRenderer _ColorMeshRenderer;
 
         void Start()
         {
             _textureReceiverClient = _textureReceiverClientObject.GetComponent<ITextureReceiverClient>();
-
-            _skyboxMaterial = RenderSettings.skybox;
-
-            if (_rawImage != null)
-            {
-                _rawImage.texture = _textureData;
-            }
-            if (_useSkybox)
-            {
-                _skyboxMaterial.mainTexture = _textureData;
-            }
+            _volumetricVideoReceiverService.Initialize(_textureReceiverClient);
 
             _connect.onClick.AddListener(OnClickConnect);
             _disconnect.onClick.AddListener(OnClickDisconnect);
             _registerReceiver.onClick.AddListener(OnClickRegisterReceiver);
             _unregisterReceiver.onClick.AddListener(OnClickUnregisterReceiver);
+
+            _DepthMeshRenderer = _DepthImageObject.GetComponent<MeshRenderer>();
+            _DepthMeshRenderer.sharedMaterial = new Material(_DepthVisualizer);
+
+            _ColorMeshRenderer = _ColorImageObject.GetComponent<MeshRenderer>();
+            _ColorMeshRenderer.sharedMaterial = new Material(_UnlitTextureMaterial);
         }
 
         void Update()
         {
             _clientIdText.text = "Client ID : " + _textureReceiverClient.ClientId;
 
-            int width = _textureReceiverClient.Width;
-            int height = _textureReceiverClient.Height;
+            _DepthImageTexture = _volumetricVideoReceiverService.DepthImageTexture;
+            _ColorImageTexture = _volumetricVideoReceiverService.ColorImageTexture;
 
-            if (_textureData == null 
-             || _textureData.width != width || _textureData.height != height)
-            {
-                _textureData = new Texture2D(width, height);
-            }
-
-            if (_textureData != null && _textureReceiverClient.RawTextureData != null)
-            {
-                _textureData.LoadImage(_textureReceiverClient.RawTextureData);
-                _textureData.Apply();
-            }
-
-            if (_rawImage != null)
-            {
-                _rawImage.texture = _textureData;
-            }
-            if (_useSkybox)
-            {
-                _skyboxMaterial.mainTexture = _textureData;
-            }
+            _DepthMeshRenderer.sharedMaterial.SetTexture("_DepthTex", _DepthImageTexture);
+            _ColorMeshRenderer.sharedMaterial.SetTexture("_MainTex", _ColorImageTexture);
         }
 
         void OnClickConnect()
@@ -92,10 +75,14 @@ namespace VolumetricVideoStreaming.Client
             _textureReceiverClient.RegisterTextureReceiver(streamingClientId);
 
             _previousStreamingClientId = streamingClientId;
+
+            _volumetricVideoReceiverService.StartReceiving();
         }
 
         void OnClickUnregisterReceiver()
         {
+            _volumetricVideoReceiverService.StopReceiving();
+
             int streamingClientId = int.Parse(_streamingClientId.text);
             _textureReceiverClient.UnregisterTextureReceiver(streamingClientId);
         }
