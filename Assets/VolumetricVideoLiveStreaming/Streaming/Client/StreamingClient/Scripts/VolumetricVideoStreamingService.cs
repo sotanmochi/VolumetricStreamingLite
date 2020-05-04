@@ -1,7 +1,5 @@
 ﻿using System;
 using UnityEngine;
-using UniRx;
-using UniRx.Triggers;
 using AzureKinect4Unity;
 using TemporalRVL;
 using RVL;
@@ -41,13 +39,14 @@ namespace VolumetricVideoStreaming.Client
         TemporalRVLDepthStreamDecoder _Decoder;
 
         ITextureStreamingClient _TextureStreamingClient;
-        float _IntervalTimeMillisec;
+        float _IntervalTimeSeconds = 100;
         int _KeyFrameInterval = 0;
-        bool _Initialized = false;
-        IDisposable _Disposable;
         int _FrameCount = 0;
+        float _Timer = 0.0f;
+        bool _Initialized = false;
+        bool _Streaming = false;
 
-        public void Initialize(ITextureStreamingClient textureStreamingClient, float intervalTimeMillisec = 100)
+        public void Initialize(ITextureStreamingClient textureStreamingClient)
         {
             _KinectSensor = _AzureKinectManager.Sensor;
             if (_KinectSensor != null)
@@ -75,33 +74,21 @@ namespace VolumetricVideoStreaming.Client
                 _Decoder = new TemporalRVLDepthStreamDecoder(depthImageSize);
 
                 _TextureStreamingClient = textureStreamingClient;
-                _IntervalTimeMillisec = intervalTimeMillisec;
-                _KeyFrameInterval = (int)(1000.0f / _IntervalTimeMillisec);
                 _Initialized = true;
             }
         }
 
-        public void StartStreaming()
+        public void StartStreaming(int frameRate)
         {
             System.Diagnostics.Stopwatch sw = new System.Diagnostics.Stopwatch();
             if (_Initialized)
             {
+                _IntervalTimeSeconds = 1.0f / frameRate;
+                _KeyFrameInterval = (int)Math.Ceiling(1.0f / _IntervalTimeSeconds);
+                _Streaming = true;
                 Debug.Log("***** Start streaming *****");
-                Debug.Log(" Interval time: " + _IntervalTimeMillisec + "[ms]");
-                StopStreaming();
-                _Disposable = this.UpdateAsObservable()
-                                .ThrottleFirst(TimeSpan.FromMilliseconds(_IntervalTimeMillisec))
-                                .Subscribe(_ => 
-                                {
-                                    // sw.Start();
-
-                                    UpdateStreaming();
-                                    // _textureStreamingClient.BroadcastRawTextureData(textureData, _texture2D.width, _texture2D.height, ++_frameCount);
-
-                                    // sw.Stop();
-                                    // Debug.Log("FrameCount: " + _frameCount + ", Processing time: " + sw.ElapsedMilliseconds + "[ms]");
-                                    // sw.Reset();
-                                });
+                Debug.Log(" Interval time: " + _IntervalTimeSeconds + "[sec]");
+                Debug.Log(" Key frame interval: " + _KeyFrameInterval + "[frames]");
             }
             else
             {
@@ -111,10 +98,20 @@ namespace VolumetricVideoStreaming.Client
 
         public void StopStreaming()
         {
-            if (_Disposable != null)
+            _Streaming = false;
+            Debug.Log("***** Stop Streaming *****");
+        }
+
+        void Update()
+        {
+            if (_Streaming)
             {
-                _Disposable.Dispose();
-                Debug.Log("***** Stop Streaming *****");
+                _Timer += Time.deltaTime;
+                if(_Timer >= _IntervalTimeSeconds)
+                {
+                    UpdateStreaming();
+                    _Timer = _Timer - _IntervalTimeSeconds;
+                }
             }
         }
 

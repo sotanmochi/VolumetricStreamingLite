@@ -28,6 +28,7 @@ namespace VolumetricVideoStreaming.Client
         [SerializeField] InputField _serverPort;
         [SerializeField] Button _connect;
         [SerializeField] Button _disconnect;
+        [SerializeField] Dropdown _frameRateDropdown;
         [SerializeField] Button _startStreaming;
         [SerializeField] Button _stopStreaming;
 
@@ -39,7 +40,7 @@ namespace VolumetricVideoStreaming.Client
         void Start()
         {
             _textureSteamingClient = _textureSteamingClientObject.GetComponent<ITextureStreamingClient>();
-            _volumetricVideoStreamingService.Initialize(_textureSteamingClient, _intervalTimeMillisec);
+            _volumetricVideoStreamingService.Initialize(_textureSteamingClient);
 
             _startStreaming.onClick.AddListener(OnClickStartStreaming);
             _stopStreaming.onClick.AddListener(OnClickStopStreaming);
@@ -74,7 +75,7 @@ namespace VolumetricVideoStreaming.Client
             _depthImageSize.text = string.Format("Size: {2:#,0} [bytes]  Resolution: {0}x{1}",
                                                  _DepthImageTexture.width, _DepthImageTexture.height,
                                                  _volumetricVideoStreamingService.OriginalDepthDataSize);
-            _compressedDepthImageSize.text = string.Format("Size: {0:#,0} [bytes]  Compression ratio: {1:F2}",
+            _compressedDepthImageSize.text = string.Format("Size: {0:#,0} [bytes]  Data compression ratio: {1:F1}",
                                                            _volumetricVideoStreamingService.CompressedDepthDataSize,
                                                            _volumetricVideoStreamingService.CompressionRation);
             _colorImageSize.text = string.Format("Size of jpeg: {0:#,0} [bytes]", _volumetricVideoStreamingService.CompressedColorDataSize);
@@ -92,7 +93,35 @@ namespace VolumetricVideoStreaming.Client
 
         void OnClickStartStreaming()
         {
-            _volumetricVideoStreamingService.StartStreaming();
+            int frameRate = 10;
+
+            string selectedFrameRate = _frameRateDropdown.options[_frameRateDropdown.value].text;
+            switch(selectedFrameRate)
+            {
+                case "10fps":
+                    frameRate = 10;
+                    break;
+                case "5fps":
+                    frameRate = 5;
+                    break;
+                case "15fps":
+                    frameRate = 15;
+                    break;
+                case "20fps":
+                    frameRate = 20;
+                    break;
+                case "24fps":
+                    frameRate = 24;
+                    break;
+                case "30fps":
+                    frameRate = 30;
+                    break;
+                default :
+                    frameRate = 10;
+                    break;
+            }
+
+            _volumetricVideoStreamingService.StartStreaming(frameRate);
         }
 
         void OnClickStopStreaming()
