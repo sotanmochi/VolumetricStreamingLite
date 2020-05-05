@@ -1,4 +1,6 @@
-﻿using System.Collections.Generic;
+﻿using System.IO;
+using System.Runtime.Serialization.Formatters.Binary;
+using System.Collections.Generic;
 using UnityEngine;
 using LiteNetLib;
 using LiteNetLib.Utils;
@@ -13,10 +15,17 @@ namespace VolumetricVideoStreaming.Server.LiteNetLib
         NetDataWriter _dataWriter;
         Dictionary<int, HashSet<int>> _streamingReceivers;
 
+        Dictionary<int, K4A.Calibration> _calibrationDictionary;
+        Dictionary<int, K4A.CalibrationType> _calibrationTypeDictionary;
+
         void Start()
         {
             _dataWriter = new NetDataWriter();
             _streamingReceivers = new Dictionary<int, HashSet<int>>();
+
+            _calibrationDictionary = new Dictionary<int, K4A.Calibration>();
+            _calibrationTypeDictionary = new Dictionary<int, K4A.CalibrationType>();
+
             _liteNetLibServer.OnNetworkReceived += OnNetworkReceived;
             _liteNetLibServer.OnPeerConnectedHandler += OnPeerConnected;
             _liteNetLibServer.OnPeerDisconnectedHandler += OnPeerDisconnected;
@@ -40,10 +49,18 @@ namespace VolumetricVideoStreaming.Server.LiteNetLib
             {
                 _streamingReceivers.Remove(disconnectedClientId);
             }
-
             foreach (var streamingReceiver in _streamingReceivers.Values)
             {
                 streamingReceiver.Remove(disconnectedClientId);
+            }
+
+            if (_calibrationDictionary.ContainsKey(disconnectedClientId))
+            {
+                _calibrationDictionary.Remove(disconnectedClientId);
+            }
+            if (_calibrationTypeDictionary.ContainsKey(disconnectedClientId))
+            {
+                _calibrationTypeDictionary.Remove(disconnectedClientId);
             }
         }
 
@@ -54,7 +71,8 @@ namespace VolumetricVideoStreaming.Server.LiteNetLib
                 NetworkDataType networkDataType = (NetworkDataType)reader.GetInt();
                 if (networkDataType == NetworkDataType.SendCalibration)
                 {
-                    SendCalibrationToReceivers(peer.Id, reader);
+                    SetCalibration(peer.Id, reader);
+                    SendCalibrationToReceivers(peer.Id);
                 }
                 if (networkDataType == NetworkDataType.SendDepthData)
                 {
@@ -75,23 +93,65 @@ namespace VolumetricVideoStreaming.Server.LiteNetLib
             }
         }
 
-        void SendCalibrationToReceivers(int streamingClientId, NetPacketReader reader)
+        void SetCalibration(int streamingClientId, NetPacketReader reader)
         {
-            Debug.Log("SendCalibration: " + reader.UserDataSize);
+            K4A.CalibrationType calibrationType = (K4A.CalibrationType)reader.GetInt();
 
             int dataLength = reader.GetInt();
             byte[] serializedCalibration = new byte[dataLength];
             reader.GetBytes(serializedCalibration, dataLength);
 
-            _dataWriter.Reset();
-            _dataWriter.Put((int)NetworkDataType.ReceiveCalibration);
-            _dataWriter.Put(serializedCalibration.Length);
-            _dataWriter.Put(serializedCalibration);
+            BinaryFormatter binaryFormatter = new BinaryFormatter();
+            MemoryStream memoryStream = new MemoryStream(serializedCalibration);
+
+            K4A.Calibration calibration = (K4A.Calibration)binaryFormatter.Deserialize(memoryStream);
+
+            if (!_calibrationTypeDictionary.ContainsKey(streamingClientId))
+            {
+                _calibrationTypeDictionary.Add(streamingClientId, calibrationType);
+            }
+            if (!_calibrationDictionary.ContainsKey(streamingClientId))
+            {
+                _calibrationDictionary.Add(streamingClientId, calibration);
+            }
+        }
+
+        void SendCalibrationToReceivers(int streamingClientId)
+        {
+            Debug.Log("Send calibration to receivers from streaming client: " + streamingClientId);
 
             foreach (int receiverClientId in _streamingReceivers[streamingClientId])
             {
-                _liteNetLibServer.SendData(receiverClientId, _dataWriter, DeliveryMethod.ReliableOrdered);
+                SendCalibrationToReceiver(streamingClientId, receiverClientId);
             }
+        }
+
+        void SendCalibrationToReceiver(int streamingClientId, int receiverClientId)
+        {
+            if (!_calibrationTypeDictionary.ContainsKey(streamingClientId) || 
+                !_calibrationDictionary.ContainsKey(streamingClientId))
+            {
+                return;
+            }
+
+            K4A.CalibrationType calibrationType = _calibrationTypeDictionary[streamingClientId];
+            K4A.Calibration calibration = _calibrationDictionary[streamingClientId];
+
+            BinaryFormatter binaryFormatter = new BinaryFormatter();
+            MemoryStream memoryStream = new MemoryStream();
+
+            binaryFormatter.Serialize(memoryStream, calibration);
+            byte[] serializedCalibration = memoryStream.ToArray();
+
+            _dataWriter.Reset();
+            _dataWriter.Put((int)NetworkDataType.ReceiveCalibration);
+            _dataWriter.Put((int)calibrationType);
+            _dataWriter.Put(serializedCalibration.Length);
+            _dataWriter.Put(serializedCalibration);
+
+            _liteNetLibServer.SendData(receiverClientId, _dataWriter, DeliveryMethod.ReliableOrdered);
+
+            Debug.Log("Send calibration of client: " + streamingClientId + " to client: " + receiverClientId);
         }
 
         void SendDepthDataToReceivers(int streamingClientId, NetPacketReader reader)
@@ -173,6 +233,8 @@ namespace VolumetricVideoStreaming.Server.LiteNetLib
             {
                 _streamingReceivers[streamingClientId].Add(receiverClientId);
             }
+
+            SendCalibrationToReceiver(streamingClientId, receiverClientId);
         }
 
         void UnregisterTextureReceiver(int receiverClientId, NetPacketReader reader)

@@ -8,7 +8,7 @@ namespace VolumetricVideoStreaming.Client
         bool StartClient(string address, int port);
         void StopClient();
 
-        void SendCalibration(K4A.Calibration calibration);
+        void SendCalibration(K4A.CalibrationType calibrationType, K4A.Calibration calibration);
         void SendDepthData(CompressionMethod compressionMethod, byte[] encodedDepthData, 
                            int depthWidth, int depthHeight, bool isKeyFrame, int frameCount = -1);
         void SendDepthAndColorData(CompressionMethod compressionMethod, byte[] encodedDepthData, int depthWidth, int depthHeight, bool isKeyFrame, 

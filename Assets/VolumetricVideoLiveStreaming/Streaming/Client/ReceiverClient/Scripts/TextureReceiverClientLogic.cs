@@ -12,6 +12,8 @@ namespace VolumetricVideoStreaming.Client.LiteNetLib
         [SerializeField] LiteNetLibClientMain _liteNetLibClient;
 
         public K4A.Calibration Calibration { get; private set; }
+        public K4A.CalibrationType CalibrationType { get; private set; }
+
         public int FrameCount { get; private set; }
         public bool IsKeyFrame { get; private set; }
         public int DepthWidth { get; private set; }
@@ -22,6 +24,8 @@ namespace VolumetricVideoStreaming.Client.LiteNetLib
         public int ColorWidth { get; private set; }
         public int ColorHeight { get; private set; }
         public byte[] ColorImageData { get; private set;  }
+
+        public OnReceivedCalibrationDelegate OnReceivedCalibration { get; set; }
 
         NetDataWriter _dataWriter;
         public int ClientId { get; private set; }
@@ -58,7 +62,7 @@ namespace VolumetricVideoStreaming.Client.LiteNetLib
                 }
                 else if (networkDataType == NetworkDataType.ReceiveCalibration)
                 {
-                    OnReceivedCalibration(peer, reader);
+                    OnReceivedCalibrationHandler(peer, reader);
                 }
                 else if (networkDataType == NetworkDataType.ReceiveDepthData)
                 {
@@ -71,8 +75,13 @@ namespace VolumetricVideoStreaming.Client.LiteNetLib
             }
         }
 
-        void OnReceivedCalibration(NetPeer peer, NetPacketReader reader)
+        void OnReceivedCalibrationHandler(NetPeer peer, NetPacketReader reader)
         {
+            Debug.Log("OnReceivedCalibration");
+
+            K4A.CalibrationType calibrationType = (K4A.CalibrationType)reader.GetInt();
+            Debug.Log("OnReceivedCalibrationType: " + calibrationType);
+
             int dataLength = reader.GetInt();
             byte[] serializedCalibration = new byte[dataLength];
             reader.GetBytes(serializedCalibration, dataLength);
@@ -81,7 +90,11 @@ namespace VolumetricVideoStreaming.Client.LiteNetLib
             MemoryStream memoryStream = new MemoryStream(serializedCalibration);
 
             K4A.Calibration calibration = (K4A.Calibration)binaryFormatter.Deserialize(memoryStream);
-            OnReceivedCalibration(calibration);
+
+            CalibrationType = calibrationType;
+            Calibration = calibration;
+
+            OnReceivedCalibration?.Invoke(calibrationType, calibration);
         }
 
         void OnReceivedDepthData(NetPeer peer, NetPacketReader reader)
@@ -120,11 +133,6 @@ namespace VolumetricVideoStreaming.Client.LiteNetLib
 
             OnReceivedDepthAndColorData(frameCount, isKeyFrame, depthWidth, depthHeight, compressionMethod, encodedDepthData,
                                         colorWidth, colorHeight, colorImageData);
-        }
-
-        public void OnReceivedCalibration(K4A.Calibration calibration)
-        {
-            Calibration = calibration;
         }
 
         public void OnReceivedDepthData(int frameCount, bool isKeyFrame, int depthWidth, int depthHeight, 

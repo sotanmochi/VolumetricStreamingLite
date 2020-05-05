@@ -7,6 +7,8 @@
 // https://github.com/microsoft/Azure-Kinect-Sensor-SDK/blob/develop/include/k4a/k4atypes.h
 //
 
+using System;
+
 namespace K4A
 {
     public enum CalibrationType
@@ -19,6 +21,7 @@ namespace K4A
         Num,
     }
 
+    [Serializable]
     public class Calibration
     {
         public CalibrationCamera DepthCameraCalibration = new CalibrationCamera();
@@ -26,6 +29,7 @@ namespace K4A
         public CalibrationExtrinsics SourceToTargetExtrinsics = new CalibrationExtrinsics();
     }
 
+    [Serializable]
     public class CalibrationCamera
     {
         public CalibrationExtrinsics extrinsics = new CalibrationExtrinsics();
@@ -35,6 +39,7 @@ namespace K4A
         public float metricRadius;
     }
 
+    [Serializable]
     public class CalibrationIntrinsics
     {
         public float cx; /**< Principal point in image, x */
@@ -54,6 +59,7 @@ namespace K4A
         public float metricRadius; /**< Metric radius */
     }
 
+    [Serializable]
     public class CalibrationExtrinsics
     {
         /**< 3x3 Rotation matrix stored in row major order */

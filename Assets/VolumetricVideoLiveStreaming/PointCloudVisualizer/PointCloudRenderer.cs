@@ -18,15 +18,21 @@ namespace VolumetricVideoLiveStreaming
             _Mesh.vertices = vertices;
         }
 
-        public void UpdateColorTexture(byte[] _TransformedColorData)
+        public void UpdateColorTexture(byte[] rawTextureData)
         {
-            _ColorTexture.LoadRawTextureData(_TransformedColorData);
+            _ColorTexture.LoadRawTextureData(rawTextureData);
             _ColorTexture.Apply();
         }
 
-        public void UpdateDepthTexture(byte[] depthImageData)
+        public void UpdateColorTextureImageByteArray(byte[] colorImageData)
         {
-            _DepthTexture.LoadRawTextureData(depthImageData);
+            _ColorTexture.LoadImage(colorImageData);
+            _ColorTexture.Apply();
+        }
+
+        public void UpdateDepthTexture(byte[] depthImageRawData)
+        {
+            _DepthTexture.LoadRawTextureData(depthImageRawData);
             _DepthTexture.Apply();
         }
 

@@ -19,6 +19,9 @@ namespace VolumetricVideoStreaming.Client
         TemporalRVLDepthStreamDecoder _Decoder;
         short[] _DecodedDepthData;
         byte[] _DepthImageRawData;
+        public byte[] DepthImageRawData { get { return _DepthImageRawData; } }
+        byte[] _ColorImageData;
+        public byte[] ColorImageData { get { return _ColorImageData; } }
 
         bool _Receiving = false;
         int _ProcessedFrameCount = -1;
@@ -90,7 +93,8 @@ namespace VolumetricVideoStreaming.Client
                 _DepthImageTexture.LoadRawTextureData(_DepthImageRawData);
                 _DepthImageTexture.Apply();
 
-                _ColorImageTexture.LoadImage(_textureReceiverClient.ColorImageData);
+                _ColorImageData = _textureReceiverClient.ColorImageData;
+                _ColorImageTexture.LoadImage(_ColorImageData);
                 _ColorImageTexture.Apply();
 
                 _ProcessedFrameCount = _textureReceiverClient.FrameCount;

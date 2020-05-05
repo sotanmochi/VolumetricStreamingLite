@@ -46,7 +46,7 @@ namespace VolumetricVideoStreaming.Client.LiteNetLib
             }
         }
 
-        public void SendCalibration(K4A.Calibration calibration)
+        public void SendCalibration(K4A.CalibrationType calibrationType, K4A.Calibration calibration)
         {
             BinaryFormatter binaryFormatter = new BinaryFormatter();
             MemoryStream memoryStream = new MemoryStream();
@@ -56,6 +56,7 @@ namespace VolumetricVideoStreaming.Client.LiteNetLib
 
             _dataWriter.Reset();
             _dataWriter.Put((int)NetworkDataType.SendCalibration);
+            _dataWriter.Put((int)calibrationType);
             _dataWriter.Put(serializedCalibration.Length);
             _dataWriter.Put(serializedCalibration);
 

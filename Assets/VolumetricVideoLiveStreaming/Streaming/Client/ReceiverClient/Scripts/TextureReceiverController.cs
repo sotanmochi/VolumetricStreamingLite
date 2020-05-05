@@ -1,5 +1,6 @@
 ﻿using UnityEngine;
 using UnityEngine.UI;
+using VolumetricVideoLiveStreaming;
 
 namespace VolumetricVideoStreaming.Client
 {
@@ -8,6 +9,7 @@ namespace VolumetricVideoStreaming.Client
         [SerializeField] VolumetricVideoReceiverService _volumetricVideoReceiverService;
         [SerializeField] GameObject _textureReceiverClientObject;
         ITextureReceiverClient _textureReceiverClient;
+        [SerializeField] PointCloudRenderer _PointCloudRenderer;
 
         [SerializeField] Shader _DepthVisualizer;
         [SerializeField] Material _UnlitTextureMaterial;
@@ -32,6 +34,7 @@ namespace VolumetricVideoStreaming.Client
         void Start()
         {
             _textureReceiverClient = _textureReceiverClientObject.GetComponent<ITextureReceiverClient>();
+            _textureReceiverClient.OnReceivedCalibration += OnReceivedCalibration;
             _volumetricVideoReceiverService.Initialize(_textureReceiverClient);
 
             _connect.onClick.AddListener(OnClickConnect);
@@ -55,6 +58,28 @@ namespace VolumetricVideoStreaming.Client
 
             _DepthMeshRenderer.sharedMaterial.SetTexture("_DepthTex", _DepthImageTexture);
             _ColorMeshRenderer.sharedMaterial.SetTexture("_MainTex", _ColorImageTexture);
+
+            if (_volumetricVideoReceiverService.DepthImageRawData != null)
+            {
+                _PointCloudRenderer.UpdateDepthTexture(_volumetricVideoReceiverService.DepthImageRawData);
+            }
+            if (_volumetricVideoReceiverService.ColorImageData != null)
+            {
+                _PointCloudRenderer.UpdateColorTextureImageByteArray(_volumetricVideoReceiverService.ColorImageData);
+            }
+        }
+
+        void OnReceivedCalibration(K4A.CalibrationType calibrationType, K4A.Calibration calibration)
+        {
+            Debug.Log("CalibrationType: " + calibrationType);
+            
+            K4A.CalibrationCamera depthCalibrationCamera = calibration.DepthCameraCalibration;
+            K4A.CalibrationCamera colorCalibrationCamera = calibration.ColorCameraCalibration;
+
+            Debug.Log("Calibration.DepthImage: " + depthCalibrationCamera.resolutionWidth + "x" + depthCalibrationCamera.resolutionHeight);
+            Debug.Log("Calibration.ColorImage: " + colorCalibrationCamera.resolutionWidth + "x" + colorCalibrationCamera.resolutionHeight);
+            
+            _PointCloudRenderer.GenerateMesh(calibration, calibrationType);
         }
 
         void OnClickConnect()

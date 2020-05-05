@@ -3,6 +3,7 @@ using UnityEngine;
 using AzureKinect4Unity;
 using TemporalRVL;
 using RVL;
+using Microsoft.Azure.Kinect.Sensor;
 
 namespace VolumetricVideoStreaming.Client
 {
@@ -37,6 +38,9 @@ namespace VolumetricVideoStreaming.Client
 
         TemporalRVLDepthStreamEncoder _Encoder;
         TemporalRVLDepthStreamDecoder _Decoder;
+
+        K4A.Calibration _Calibration;
+        K4A.CalibrationType _CalibrationType;
 
         ITextureStreamingClient _TextureStreamingClient;
         float _IntervalTimeSeconds = 0.01f;
@@ -74,9 +78,100 @@ namespace VolumetricVideoStreaming.Client
                 _Encoder = new TemporalRVLDepthStreamEncoder(depthImageSize, 10, 2);
                 _Decoder = new TemporalRVLDepthStreamDecoder(depthImageSize);
 
+                CameraCalibration deviceDepthCameraCalibration = _KinectSensor.DeviceCalibration.DepthCameraCalibration;
+                CameraCalibration deviceColorCameraCalibration = _KinectSensor.DeviceCalibration.ColorCameraCalibration;
+
+                _Calibration = new K4A.Calibration();
+                _Calibration.DepthCameraCalibration = CreateCalibrationCamera(deviceDepthCameraCalibration, _KinectSensor.DepthImageWidth, _KinectSensor.DepthImageHeight);
+                _Calibration.ColorCameraCalibration = CreateCalibrationCamera(deviceColorCameraCalibration, _KinectSensor.ColorImageWidth, _KinectSensor.ColorImageHeight);
+
+                _CalibrationType = K4A.CalibrationType.Depth; // Color to depth
+                // _CalibrationType = K4A.CalibrationType.Color; // Depth to color
+
                 _TextureStreamingClient = textureStreamingClient;
                 _Initialized = true;
             }
+        }
+
+        K4A.CalibrationCamera CreateCalibrationCamera(CameraCalibration cameraCalibration, int width, int height)
+        {
+            K4A.CalibrationCamera calibrationCamera = new K4A.CalibrationCamera();
+
+            float[] intrinsicsParameters = cameraCalibration.Intrinsics.Parameters;
+            Extrinsics extrinsics = cameraCalibration.Extrinsics;
+
+            calibrationCamera.resolutionWidth = width;
+            calibrationCamera.resolutionHeight = height;
+            calibrationCamera.metricRadius = cameraCalibration.MetricRadius;
+
+            calibrationCamera.intrinsics.cx = intrinsicsParameters[0];
+            calibrationCamera.intrinsics.cy = intrinsicsParameters[1];
+            calibrationCamera.intrinsics.fx = intrinsicsParameters[2];
+            calibrationCamera.intrinsics.fy = intrinsicsParameters[3];
+            calibrationCamera.intrinsics.k1 = intrinsicsParameters[4];
+            calibrationCamera.intrinsics.k2 = intrinsicsParameters[5];
+            calibrationCamera.intrinsics.k3 = intrinsicsParameters[6];
+            calibrationCamera.intrinsics.k4 = intrinsicsParameters[7];
+            calibrationCamera.intrinsics.k5 = intrinsicsParameters[8];
+            calibrationCamera.intrinsics.k6 = intrinsicsParameters[9];
+            calibrationCamera.intrinsics.codx = intrinsicsParameters[10];
+            calibrationCamera.intrinsics.cody = intrinsicsParameters[11];
+            calibrationCamera.intrinsics.p2 = intrinsicsParameters[12]; // p2: tangential distortion coefficient y
+            calibrationCamera.intrinsics.p1 = intrinsicsParameters[13]; // p1: tangential distortion coefficient x
+            calibrationCamera.intrinsics.metricRadius = intrinsicsParameters[14];
+
+            calibrationCamera.extrinsics.rotation[0][0] = extrinsics.Rotation[0];
+            calibrationCamera.extrinsics.rotation[0][1] = extrinsics.Rotation[1];
+            calibrationCamera.extrinsics.rotation[0][2] = extrinsics.Rotation[2];
+            calibrationCamera.extrinsics.rotation[1][0] = extrinsics.Rotation[3];
+            calibrationCamera.extrinsics.rotation[1][1] = extrinsics.Rotation[4];
+            calibrationCamera.extrinsics.rotation[1][2] = extrinsics.Rotation[5];
+            calibrationCamera.extrinsics.rotation[2][0] = extrinsics.Rotation[6];
+            calibrationCamera.extrinsics.rotation[2][1] = extrinsics.Rotation[7];
+            calibrationCamera.extrinsics.rotation[2][2] = extrinsics.Rotation[8];
+            calibrationCamera.extrinsics.translation[0] = extrinsics.Translation[0];
+            calibrationCamera.extrinsics.translation[1] = extrinsics.Translation[1];
+            calibrationCamera.extrinsics.translation[2] = extrinsics.Translation[2];
+
+            // Debug.Log("***** Camera parameters *****");
+            // Debug.Log(" Intrinsics.cx: " + calibrationCamera.intrinsics.cx);
+            // Debug.Log(" Intrinsics.cy: " + calibrationCamera.intrinsics.cy);
+            // Debug.Log(" Intrinsics.fx: " + calibrationCamera.intrinsics.fx);
+            // Debug.Log(" Intrinsics.fy: " + calibrationCamera.intrinsics.fy);
+            // Debug.Log(" Intrinsics.k1: " + calibrationCamera.intrinsics.k1);
+            // Debug.Log(" Intrinsics.k2: " + calibrationCamera.intrinsics.k2);
+            // Debug.Log(" Intrinsics.k3: " + calibrationCamera.intrinsics.k3);
+            // Debug.Log(" Intrinsics.k4: " + calibrationCamera.intrinsics.k4);
+            // Debug.Log(" Intrinsics.k5: " + calibrationCamera.intrinsics.k5);
+            // Debug.Log(" Intrinsics.k6: " + calibrationCamera.intrinsics.k6);
+            // Debug.Log(" Intrinsics.codx: " + calibrationCamera.intrinsics.codx);
+            // Debug.Log(" Intrinsics.cody: " + calibrationCamera.intrinsics.cody);
+            // Debug.Log(" Intrinsics.p2: " + calibrationCamera.intrinsics.p2);
+            // Debug.Log(" Intrinsics.p1: " + calibrationCamera.intrinsics.p1);
+            // Debug.Log(" Intrinsics.metricRadius: " + calibrationCamera.intrinsics.metricRadius);
+            // Debug.Log(" MetricRadius: " + calibrationCamera.metricRadius);
+            // Debug.Log("*****************************");
+
+            // for (int i = 0; i < extrinsics.Rotation.Length; i++)
+            // {
+            //     Debug.Log(" Extrinsics.R[" + i + "]: " + extrinsics.Rotation[i]);
+            // }
+            // for (int i = 0; i < extrinsics.Translation.Length; i++)
+            // {
+            //     Debug.Log(" Extrinsics.T[" + i + "]: " + extrinsics.Translation[i]);
+            // }
+
+            // extrinsics = deviceDepthCameraCalibration.Extrinsics;
+            // for (int i = 0; i < extrinsics.Rotation.Length; i++)
+            // {
+            //     Debug.Log(" Extrinsics.R[" + i + "]: " + extrinsics.Rotation[i]);
+            // }
+            // for (int i = 0; i < extrinsics.Translation.Length; i++)
+            // {
+            //     Debug.Log(" Extrinsics.T[" + i + "]: " + extrinsics.Translation[i]);
+            // }
+
+            return calibrationCamera;
         }
 
         public void StartStreaming(int frameRate)
@@ -84,9 +179,12 @@ namespace VolumetricVideoStreaming.Client
             System.Diagnostics.Stopwatch sw = new System.Diagnostics.Stopwatch();
             if (_Initialized)
             {
+                _TextureStreamingClient.SendCalibration(_CalibrationType, _Calibration);
+
                 _IntervalTimeSeconds = 1.0f / frameRate;
                 _KeyFrameInterval = (int)Math.Ceiling(1.0f / _IntervalTimeSeconds);
                 _Streaming = true;
+
                 Debug.Log("***** Start streaming *****");
                 Debug.Log(" Interval time: " + _IntervalTimeSeconds + "[sec]");
                 Debug.Log(" Key frame interval: " + _KeyFrameInterval + "[frames]");

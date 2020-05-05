@@ -5,10 +5,10 @@ EditorBuildSettings:
   m_ObjectHideFlags: 0
   serializedVersion: 2
   m_Scenes:
-  - enabled: 0
+  - enabled: 1
     path: Assets/VolumetricVideoLiveStreaming/Streaming/Server/VolumetricVideoStreamingServer.unity
     guid: 4f2300ff554866243822f639839f5d9d
-  - enabled: 1
+  - enabled: 0
     path: Assets/VolumetricVideoLiveStreaming/Streaming/Client/StreamingClient/VolumetricVideoSteamingClient.unity
     guid: 84a66c08a2acc234ca93e85c680b49db
   - enabled: 0
