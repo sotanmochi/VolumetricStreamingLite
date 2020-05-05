@@ -1,14 +1,41 @@
 ﻿//
-// This code is licensed under the MIT License.
-//
-// This algorithm is from 
+// This is a modified version of the Temporal RVL source code from 
 // Temporal RVL: A Depth Stream Compression Method (H. Jun and J. Bailenson., 2020).
+//
+// This code is licensed under the MIT License.
+// Copyright (c) 2020 Hanseul Jun
+// Copyright (c) 2020 Soichiro Sugimoto
 //
 // The original Temporal RVL source code is available on GitHub.
 // https://github.com/hanseuljun/temporal-rvl/blob/master/cpp/src/trvl.h
 //
 // H. Jun and J. Bailenson. (2020). Temporal RVL: A Depth Stream Compression Method. 
 // https://vhil.stanford.edu/mm/2020/02/jun-vr-temporal.pdf
+//
+// -----
+//
+// MIT License
+//
+// Copyright (c) 2020 Hanseul Jun
+// Copyright (c) 2020 Soichiro Sugimoto
+//
+// Permission is hereby granted, free of charge, to any person obtaining a copy
+// of this software and associated documentation files (the "Software"), to deal
+// in the Software without restriction, including without limitation the rights
+// to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+// copies of the Software, and to permit persons to whom the Software is
+// furnished to do so, subject to the following conditions:
+//
+// The above copyright notice and this permission notice shall be included in all
+// copies or substantial portions of the Software.
+//
+// THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+// IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+// FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+// AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+// LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+// OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+// SOFTWARE.
 //
 
 using System;
@@ -109,31 +136,31 @@ namespace DepthStreamCompression
 
     public class TemporalRVLDepthStreamDecoder
     {
-        short[] _PreviousPixelValues;
-        short[] _PixelDiffs;
+        short[] _previousPixelValues;
+        short[] _pixelDiffs;
 
         public TemporalRVLDepthStreamDecoder(int frameSize)
         {
-            _PreviousPixelValues = new short[frameSize];
-            _PixelDiffs = new short[frameSize];
+            _previousPixelValues = new short[frameSize];
+            _pixelDiffs = new short[frameSize];
         }
 
         public short[] Decode(byte[] trvlEncodedFrame, bool keyFrame)
         {
-            int frameSize = _PreviousPixelValues.Length;
+            int frameSize = _previousPixelValues.Length;
             if (keyFrame)
             {
-                RVLDepthImageCompressor.DecompressRVL(trvlEncodedFrame, _PreviousPixelValues);
-                return _PreviousPixelValues;
+                RVLDepthImageCompressor.DecompressRVL(trvlEncodedFrame, _previousPixelValues);
+                return _previousPixelValues;
             }
 
-            RVLDepthImageCompressor.DecompressRVL(trvlEncodedFrame, _PixelDiffs);
+            RVLDepthImageCompressor.DecompressRVL(trvlEncodedFrame, _pixelDiffs);
             for (int i = 0; i < frameSize; i++)
             {
-                _PreviousPixelValues[i] += _PixelDiffs[i];
+                _previousPixelValues[i] += _pixelDiffs[i];
             }
 
-            return _PreviousPixelValues;
+            return _previousPixelValues;
         }
     }
 }

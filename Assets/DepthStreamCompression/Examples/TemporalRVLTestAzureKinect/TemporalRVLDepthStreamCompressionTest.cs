@@ -1,4 +1,8 @@
-﻿using System;
+﻿// This code is licensed under CC0.
+// http://creativecommons.org/publicdomain/zero/1.0/deed.ja
+// https://creativecommons.org/publicdomain/zero/1.0/deed.en
+
+using System;
 using UnityEngine;
 using AzureKinect4Unity;
 
