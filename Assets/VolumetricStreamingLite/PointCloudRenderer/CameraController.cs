@@ -1,10 +1,9 @@
-﻿// **********************************************************
-// * CameraController.cs
-// *
-// * Reference
-// *   http://esprog.hatenablog.com/entry/2016/03/20/033322
-// *
-// **********************************************************
+﻿//
+// This is a modified version of the source code from Es's blog.
+//
+// The original source code is available in Es's blog.
+// http://esprog.hatenablog.com/entry/2016/03/20/033322
+//
 
 using UnityEngine;
 

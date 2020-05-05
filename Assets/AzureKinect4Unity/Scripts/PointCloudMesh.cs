@@ -7,7 +7,7 @@ using UnityEngine.Rendering;
 namespace AzureKinect4Unity
 {
     [RequireComponent(typeof(MeshFilter), typeof(MeshRenderer))]
-    public class PointCloudRenderer : MonoBehaviour
+    public class PointCloudMesh : MonoBehaviour
     {
         private Mesh _Mesh;
         private Texture2D _ColorTexture;

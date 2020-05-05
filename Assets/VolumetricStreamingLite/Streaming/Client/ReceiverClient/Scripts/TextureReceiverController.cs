@@ -1,6 +1,6 @@
 ﻿using UnityEngine;
 using UnityEngine.UI;
-using VolumetricVideoLiveStreaming;
+using VolumetricStreamingLite;
 
 namespace VolumetricVideoStreaming.Client
 {

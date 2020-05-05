@@ -5,10 +5,10 @@ using UnityEngine;
 using Microsoft.Azure.Kinect.Sensor;
 using AzureKinect4Unity;
 
-namespace VolumetricVideoLiveStreaming
+namespace VolumetricStreamingLite
 {
     [RequireComponent(typeof(PointCloudRenderer))]
-    public class AzureKinectPointCloudVisualizer : MonoBehaviour
+    public class PointCloudRendererTest : MonoBehaviour
     {
         [SerializeField] AzureKinectManager _AzureKinectManager;
 

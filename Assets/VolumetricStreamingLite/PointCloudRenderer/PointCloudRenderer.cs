@@ -1,10 +1,10 @@
-﻿// Copyright (c) Soichiro Sugimoto.
+﻿// Copyright (c) 2020 Soichiro Sugimoto.
 // Licensed under the MIT License. See LICENSE in the project root for license information.
 
 using UnityEngine;
 using UnityEngine.Rendering;
 
-namespace VolumetricVideoLiveStreaming
+namespace VolumetricStreamingLite
 {
     [RequireComponent(typeof(MeshFilter), typeof(MeshRenderer))]
     public class PointCloudRenderer : MonoBehaviour

@@ -3,14 +3,14 @@ using Microsoft.Azure.Kinect.Sensor;
 
 namespace AzureKinect4Unity
 {
-    [RequireComponent(typeof(PointCloudRenderer))]
+    [RequireComponent(typeof(PointCloudMesh))]
     public class AzureKinectPointCloudVisualizer : MonoBehaviour
     {
         [SerializeField] AzureKinectManager _AzureKinectManager;
 
         AzureKinectSensor _KinectSensor;
 
-        PointCloudRenderer _PointCloudRenderer;
+        PointCloudMesh _PointCloudMesh;
         Texture2D _ColorImageTexture;
 
         void Start()
@@ -23,8 +23,8 @@ namespace AzureKinect4Unity
 
                 _ColorImageTexture = new Texture2D(_KinectSensor.ColorImageWidth, _KinectSensor.ColorImageHeight, TextureFormat.BGRA32, false);
 
-                _PointCloudRenderer = GetComponent<PointCloudRenderer>();
-                _PointCloudRenderer.GenerateMesh(_KinectSensor.ColorImageWidth, _KinectSensor.ColorImageHeight);
+                _PointCloudMesh = GetComponent<PointCloudMesh>();
+                _PointCloudMesh.GenerateMesh(_KinectSensor.ColorImageWidth, _KinectSensor.ColorImageHeight);
             }
         }
 
@@ -46,8 +46,8 @@ namespace AzureKinect4Unity
                     vertices[i] = new Vector3(pointCloud[i].X * 0.001f, pointCloud[i].Y * -0.001f, pointCloud[i].Z * 0.001f);
                 }
 
-                _PointCloudRenderer.UpdateVertices(vertices);
-                _PointCloudRenderer.UpdateColorTexture(_KinectSensor.RawColorImage);
+                _PointCloudMesh.UpdateVertices(vertices);
+                _PointCloudMesh.UpdateColorTexture(_KinectSensor.RawColorImage);
             }
         }
     }
