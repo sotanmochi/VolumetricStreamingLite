@@ -1,6 +1,6 @@
-﻿using UnityEngine;
+﻿using System.Collections.Generic;
+using UnityEngine;
 using Aws.GameLift.Server;
-using System.Collections.Generic;
 
 public class GameLiftServerExample : MonoBehaviour
 {

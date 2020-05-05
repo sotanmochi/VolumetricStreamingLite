@@ -1,6 +1,9 @@
-﻿using System.IO;
-using System.Runtime.Serialization.Formatters.Binary;
+﻿// Copyright (c) 2020 Soichiro Sugimoto.
+// Licensed under the MIT License. See LICENSE in the project root for license information.
+
 using System.Collections.Generic;
+using System.IO;
+using System.Runtime.Serialization.Formatters.Binary;
 using UnityEngine;
 using LiteNetLib;
 using LiteNetLib.Utils;
