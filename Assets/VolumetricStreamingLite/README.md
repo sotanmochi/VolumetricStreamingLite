@@ -1,4 +1,5 @@
-# Volumetric Video Live Streaming
+# Volumetric Streaming Lite
+Real-time Volumetric Video Streaming Implementation using Unity and LiteNetLib (Reliable UDP Library).
 
 ## Tested environment
 - Unity 2018.4.21f1

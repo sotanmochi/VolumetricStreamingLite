@@ -20,8 +20,8 @@ Assets/Plugins/*
 !Assets/K4ATransformation/
 !Assets/K4ATransformation.meta
 
-!Assets/VolumetricVideoLiveStreaming/
-!Assets/VolumetricVideoLiveStreaming.meta
+!Assets/VolumetricStreamingLite/
+!Assets/VolumetricStreamingLite.meta
 
 # ======================================= #
 # Third party assets (Not ignored assets)
