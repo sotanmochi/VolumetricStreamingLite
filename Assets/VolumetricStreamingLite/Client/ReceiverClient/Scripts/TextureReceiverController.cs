@@ -1,8 +1,7 @@
 ﻿using UnityEngine;
 using UnityEngine.UI;
-using VolumetricStreamingLite;
 
-namespace VolumetricVideoStreaming.Client
+namespace VolumetricStreamingLite.Client
 {
     public class TextureReceiverController : MonoBehaviour
     {

@@ -1,5 +1,5 @@
 ﻿
-namespace VolumetricVideoStreaming
+namespace VolumetricStreamingLite
 {
     public enum CompressionMethod
     {

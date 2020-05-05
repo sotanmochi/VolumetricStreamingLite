@@ -1,7 +1,7 @@
 ﻿using UnityEngine;
 using UnityEngine.UI;
 
-namespace VolumetricVideoStreaming.Client
+namespace VolumetricStreamingLite.Client
 {
     public class VolumetricVideoStreamingController : MonoBehaviour
     {

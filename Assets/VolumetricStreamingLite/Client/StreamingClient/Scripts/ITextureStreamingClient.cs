@@ -1,5 +1,5 @@
 
-namespace VolumetricVideoStreaming.Client
+namespace VolumetricStreamingLite.Client
 {
     public interface ITextureStreamingClient
     {

@@ -4,7 +4,7 @@ using AzureKinect4Unity;
 using DepthStreamCompression;
 using Microsoft.Azure.Kinect.Sensor;
 
-namespace VolumetricVideoStreaming.Client
+namespace VolumetricStreamingLite.Client
 {
     public class VolumetricVideoStreamingService : MonoBehaviour
     {

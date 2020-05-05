@@ -1,5 +1,5 @@
 ﻿
-namespace VolumetricVideoStreaming.Client
+namespace VolumetricStreamingLite.Client
 {
     public delegate void OnReceivedCalibrationDelegate(K4A.CalibrationType calibrationType, K4A.Calibration calibration);
 

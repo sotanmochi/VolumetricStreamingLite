@@ -2,7 +2,7 @@
 using UnityEngine;
 using DepthStreamCompression;
 
-namespace VolumetricVideoStreaming.Client
+namespace VolumetricStreamingLite.Client
 {
     public class VolumetricVideoReceiverService : MonoBehaviour
     {

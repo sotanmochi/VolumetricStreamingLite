@@ -5,7 +5,7 @@ using LiteNetLib;
 using LiteNetLib.Utils;
 using LiteNetLibExtension;
 
-namespace VolumetricVideoStreaming.Client.LiteNetLib
+namespace VolumetricStreamingLite.Client
 {
     public class TextureStreamingClientLogic : MonoBehaviour, ITextureStreamingClient
     {
