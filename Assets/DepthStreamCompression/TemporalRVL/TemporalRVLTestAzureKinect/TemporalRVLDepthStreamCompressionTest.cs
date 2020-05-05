@@ -2,7 +2,7 @@
 using UnityEngine;
 using AzureKinect4Unity;
 
-namespace TemporalRVL.Test
+namespace DepthStreamCompression.Test
 {
     public class TemporalRVLDepthStreamCompressionTest : MonoBehaviour
     {

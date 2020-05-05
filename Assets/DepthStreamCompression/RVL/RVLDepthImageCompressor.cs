@@ -13,7 +13,7 @@
 
 using System;
 
-namespace RVL
+namespace DepthStreamCompression
 {
     public class RVLDepthImageCompressor
     {

@@ -1,8 +1,7 @@
 ﻿using System;
 using UnityEngine;
 using AzureKinect4Unity;
-using TemporalRVL;
-using RVL;
+using DepthStreamCompression;
 using Microsoft.Azure.Kinect.Sensor;
 
 namespace VolumetricVideoStreaming.Client

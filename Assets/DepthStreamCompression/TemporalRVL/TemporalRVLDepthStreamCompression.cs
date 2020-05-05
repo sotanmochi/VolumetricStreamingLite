@@ -12,9 +12,8 @@
 //
 
 using System;
-using RVL;
 
-namespace TemporalRVL
+namespace DepthStreamCompression
 {
     struct Pixel
     {

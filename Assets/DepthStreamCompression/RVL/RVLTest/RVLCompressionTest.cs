@@ -1,7 +1,7 @@
 ﻿using System;
 using UnityEngine;
 
-namespace RVL.Test
+namespace DepthStreamCompression.Test
 {
     public class RVLCompressionTest : MonoBehaviour
     {

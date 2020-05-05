@@ -1,7 +1,6 @@
 ﻿using System;
 using UnityEngine;
-using TemporalRVL;
-using RVL;
+using DepthStreamCompression;
 
 namespace VolumetricVideoStreaming.Client
 {

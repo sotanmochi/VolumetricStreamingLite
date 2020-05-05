@@ -2,7 +2,7 @@
 using UnityEngine;
 using AzureKinect4Unity;
 
-namespace RVL.Test
+namespace DepthStreamCompression.Test
 {
     public class RVLDepthImageCompressionTest : MonoBehaviour
     {
