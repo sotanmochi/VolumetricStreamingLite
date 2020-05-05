@@ -1,4 +1,7 @@
-﻿using System;
+﻿// Copyright (c) 2020 Soichiro Sugimoto.
+// Licensed under the MIT License. See LICENSE in the project root for license information.
+
+using System;
 using UnityEngine;
 using AzureKinect4Unity;
 using DepthStreamCompression;
@@ -6,9 +9,12 @@ using Microsoft.Azure.Kinect.Sensor;
 
 namespace VolumetricStreamingLite.Client
 {
-    public class VolumetricVideoStreamingService : MonoBehaviour
+    public class StreamingService : MonoBehaviour
     {
         [SerializeField] AzureKinectManager _AzureKinectManager;
+        [SerializeField] StreamingClient _StreamingClient;
+
+        public int ClientId { get { return _StreamingClient.ClientId ;} }
 
         Texture2D _DepthImageTexture;
         public Texture2D DepthImageTexture { get { return _DepthImageTexture; } }
@@ -20,7 +26,7 @@ namespace VolumetricStreamingLite.Client
         public Texture2D ColorImageTexture { get { return _ColorImageTexture; } }
 
         float _CompressionRatio;
-        public float CompressionRation { get { return _CompressionRatio; } }
+        public float CompressionRatio { get { return _CompressionRatio; } }
         int _CompressedDepthDataSize;
         public int CompressedDepthDataSize { get { return _CompressedDepthDataSize; } }
         int _OriginalDepthDataSize;
@@ -28,29 +34,44 @@ namespace VolumetricStreamingLite.Client
         int _CompressedColorDataSize;
         public int CompressedColorDataSize { get { return _CompressedColorDataSize; } }
 
+        bool _Initialized = false;
+        bool _Streaming = false;
+        float _Timer = 0.0f;
+
         AzureKinectSensor _KinectSensor;
+        K4A.Calibration _Calibration;
+        K4A.CalibrationType _CalibrationType;
+
+        TemporalRVLDepthStreamEncoder _Encoder;
+        TemporalRVLDepthStreamDecoder _Decoder;
+
+        int _DepthImageSize;
         byte[] _DepthRawData;
         byte[] _EncodedDepthData;
         short[] _DecodedDepthData;
         short[] _Diff;
         byte[] _EncodedColorImageData;
 
-        TemporalRVLDepthStreamEncoder _Encoder;
-        TemporalRVLDepthStreamDecoder _Decoder;
-
-        K4A.Calibration _Calibration;
-        K4A.CalibrationType _CalibrationType;
-
-        ITextureStreamingClient _TextureStreamingClient;
+        CompressionMethod _DepthCompressionMethod;
         float _IntervalTimeSeconds = 0.01f;
         int _KeyFrameInterval = 0;
-        float _Timer = 0.0f;
-        bool _Initialized = false;
-        bool _Streaming = false;
         int _FrameCount = 0;
         bool _KeyFrame = false;
 
-        public void Initialize(ITextureStreamingClient textureStreamingClient)
+        void Update()
+        {
+            if (_Streaming)
+            {
+                _Timer += Time.deltaTime;
+                if(_Timer >= _IntervalTimeSeconds)
+                {
+                    UpdateStreaming();
+                    _Timer = _Timer - _IntervalTimeSeconds;
+                }
+            }
+        }
+
+        public void Initialize()
         {
             _KinectSensor = _AzureKinectManager.Sensor;
             if (_KinectSensor != null)
@@ -58,24 +79,18 @@ namespace VolumetricStreamingLite.Client
                 Debug.Log("ColorResolution: " + _KinectSensor.ColorImageWidth + "x" + _KinectSensor.ColorImageHeight);
                 Debug.Log("DepthResolution: " + _KinectSensor.DepthImageWidth + "x" + _KinectSensor.DepthImageHeight);
 
-                int depthImageSize = _KinectSensor.DepthImageWidth * _KinectSensor.DepthImageHeight;
-                _DepthRawData = new byte[depthImageSize * sizeof(ushort)];
-                _EncodedDepthData = new byte[depthImageSize];
-                _DecodedDepthData = new short[depthImageSize];
-                _Diff = new short[depthImageSize];
-                _EncodedColorImageData = new byte[depthImageSize];
+                _DepthImageSize = _KinectSensor.DepthImageWidth * _KinectSensor.DepthImageHeight;
+                _DepthRawData = new byte[_DepthImageSize * sizeof(short)];
+                _Diff = new short[_DepthImageSize];
+                _EncodedColorImageData = new byte[_DepthImageSize];
 
                 _DepthImageTexture = new Texture2D(_KinectSensor.DepthImageWidth, _KinectSensor.DepthImageHeight, TextureFormat.R16, false);
                 _DecodedDepthImageTexture = new Texture2D(_KinectSensor.DepthImageWidth, _KinectSensor.DepthImageHeight, TextureFormat.R16, false);
                 _DiffImageTexture = new Texture2D(_KinectSensor.DepthImageWidth, _KinectSensor.DepthImageHeight, TextureFormat.R16, false);
                 _ColorImageTexture = new Texture2D(_KinectSensor.DepthImageWidth, _KinectSensor.DepthImageHeight, TextureFormat.BGRA32, false);
 
-                // int colorImageSize = _KinectSensor.ColorImageWidth * _KinectSensor.ColorImageHeight;
-                // _EncodedColorImageData = new byte[depthImageSize];
-                // _ColorImageTexture = new Texture2D(_KinectSensor.ColorImageWidth, _KinectSensor.ColorImageHeight, TextureFormat.BGRA32, false);
-
-                _Encoder = new TemporalRVLDepthStreamEncoder(depthImageSize, 10, 2);
-                _Decoder = new TemporalRVLDepthStreamDecoder(depthImageSize);
+                _Encoder = new TemporalRVLDepthStreamEncoder(_DepthImageSize, 10, 2);
+                _Decoder = new TemporalRVLDepthStreamDecoder(_DepthImageSize);
 
                 CameraCalibration deviceDepthCameraCalibration = _KinectSensor.DeviceCalibration.DepthCameraCalibration;
                 CameraCalibration deviceColorCameraCalibration = _KinectSensor.DeviceCalibration.ColorCameraCalibration;
@@ -85,11 +100,120 @@ namespace VolumetricStreamingLite.Client
                 _Calibration.ColorCameraCalibration = CreateCalibrationCamera(deviceColorCameraCalibration, _KinectSensor.ColorImageWidth, _KinectSensor.ColorImageHeight);
 
                 _CalibrationType = K4A.CalibrationType.Depth; // Color to depth
-                // _CalibrationType = K4A.CalibrationType.Color; // Depth to color
 
-                _TextureStreamingClient = textureStreamingClient;
                 _Initialized = true;
             }
+            else
+            {
+                Debug.LogError("KinectSensor is null!");
+            }
+        }
+
+        public void Connect(string address, int port)
+        {
+            _StreamingClient.StartClient(address, port);
+        }
+
+        public void Disconnect()
+        {
+            _StreamingClient.StopClient();
+        }
+
+        public void StartStreaming(int frameRate, CompressionMethod compressionMethod)
+        {
+            System.Diagnostics.Stopwatch sw = new System.Diagnostics.Stopwatch();
+            if (_Initialized)
+            {
+                _StreamingClient.SendCalibration(_CalibrationType, _Calibration);
+
+                _IntervalTimeSeconds = 1.0f / frameRate;
+                _KeyFrameInterval = (int) Math.Ceiling(1.0f / _IntervalTimeSeconds);
+
+                _DepthCompressionMethod = compressionMethod;
+
+                _EncodedDepthData = new byte[_DepthImageSize];
+                _DecodedDepthData = new short[_DepthImageSize];
+
+                _Streaming = true;
+
+                Debug.Log("***** Start streaming *****");
+                Debug.Log(" Interval time: " + _IntervalTimeSeconds + " [sec]");
+                Debug.Log(" Key frame interval: " + _KeyFrameInterval + " [frames]");
+            }
+            else
+            {
+                Debug.LogError("Volumetric streaming service has not been initialized.");
+            }
+        }
+
+        public void StopStreaming()
+        {
+            _Streaming = false;
+            Debug.Log("***** Stop Streaming *****");
+        }
+
+        void UpdateStreaming()
+        {
+            if (_KinectSensor.RawDepthImage != null)
+            {
+                // Original depth image
+                short[] depthImage = _KinectSensor.RawDepthImage;
+                Buffer.BlockCopy(depthImage, 0, _DepthRawData, 0, _DepthRawData.Length * sizeof(byte));
+                _DepthImageTexture.LoadRawTextureData(_DepthRawData);
+                _DepthImageTexture.Apply();
+
+                _KeyFrame = (_FrameCount++ % _KeyFrameInterval == 0);
+
+                if (_DepthCompressionMethod == CompressionMethod.TemporalRVL)
+                {
+                    // Temporal RVL compression
+                    _EncodedDepthData = _Encoder.Encode(depthImage, _KeyFrame);
+                    _CompressedDepthDataSize = _EncodedDepthData.Length;                    
+
+                    // Temporal RVL decompression
+                    _DecodedDepthData = _Decoder.Decode(_EncodedDepthData, _KeyFrame);
+                }
+                else if (_DepthCompressionMethod == CompressionMethod.RVL)
+                {
+                    // RVL compression
+                    _CompressedDepthDataSize = RVLDepthImageCompressor.CompressRVL(depthImage, _EncodedDepthData);                    
+
+                    // RVL decompression
+                    RVLDepthImageCompressor.DecompressRVL(_EncodedDepthData, _DecodedDepthData);
+                }
+
+                _OriginalDepthDataSize = depthImage.Length * sizeof(ushort);
+                _CompressionRatio = ((float) _OriginalDepthDataSize / _CompressedDepthDataSize);
+
+                // Decoded depth image
+                Buffer.BlockCopy(_DecodedDepthData, 0, _DepthRawData, 0, _DepthRawData.Length * sizeof(byte));
+                _DecodedDepthImageTexture.LoadRawTextureData(_DepthRawData);
+                _DecodedDepthImageTexture.Apply();
+
+                // Difference of original and decoded image
+                for (int i = 0; i < depthImage.Length; i++)
+                {
+                    _Diff[i] = (short)Math.Abs(depthImage[i] - _DecodedDepthData[i]);
+                }
+
+                // Visualize diff image
+                Buffer.BlockCopy(_Diff, 0, _DepthRawData, 0, _DepthRawData.Length * sizeof(byte));
+                _DiffImageTexture.LoadRawTextureData(_DepthRawData);
+                _DiffImageTexture.Apply();
+            }
+
+            if (_KinectSensor.TransformedColorImage != null)
+            {
+                _ColorImageTexture.LoadRawTextureData(_KinectSensor.TransformedColorImage);
+                _ColorImageTexture.Apply();
+
+                _EncodedColorImageData = ImageConversion.EncodeToJPG(_ColorImageTexture);
+                _CompressedColorDataSize = _EncodedColorImageData.Length;
+            }
+
+            _StreamingClient.SendDepthAndColorData(CompressionMethod.TemporalRVL, _EncodedDepthData, 
+                                                   _KinectSensor.DepthImageWidth, _KinectSensor.DepthImageHeight, _KeyFrame,
+                                                   _EncodedColorImageData, _ColorImageTexture.width, _ColorImageTexture.height, _FrameCount);
         }
 
         K4A.CalibrationCamera CreateCalibrationCamera(CameraCalibration cameraCalibration, int width, int height)
@@ -171,104 +295,6 @@ namespace VolumetricStreamingLite.Client
             // }
 
             return calibrationCamera;
-        }
-
-        public void StartStreaming(int frameRate)
-        {
-            System.Diagnostics.Stopwatch sw = new System.Diagnostics.Stopwatch();
-            if (_Initialized)
-            {
-                _TextureStreamingClient.SendCalibration(_CalibrationType, _Calibration);
-
-                _IntervalTimeSeconds = 1.0f / frameRate;
-                _KeyFrameInterval = (int)Math.Ceiling(1.0f / _IntervalTimeSeconds);
-                _Streaming = true;
-
-                Debug.Log("***** Start streaming *****");
-                Debug.Log(" Interval time: " + _IntervalTimeSeconds + "[sec]");
-                Debug.Log(" Key frame interval: " + _KeyFrameInterval + "[frames]");
-            }
-            else
-            {
-                Debug.LogError("Volumetric video streaming service has not been initialized.");
-            }
-        }
-
-        public void StopStreaming()
-        {
-            _Streaming = false;
-            Debug.Log("***** Stop Streaming *****");
-        }
-
-        void Update()
-        {
-            if (_Streaming)
-            {
-                _Timer += Time.deltaTime;
-                if(_Timer >= _IntervalTimeSeconds)
-                {
-                    UpdateStreaming();
-                    _Timer = _Timer - _IntervalTimeSeconds;
-                }
-            }
-        }
-
-        void UpdateStreaming()
-        {
-            if (_KinectSensor.RawDepthImage != null)
-            {
-                // Visualize original depth image
-                short[] depthImage = _KinectSensor.RawDepthImage;
-                Buffer.BlockCopy(depthImage, 0, _DepthRawData, 0, _DepthRawData.Length * sizeof(byte));
-                _DepthImageTexture.LoadRawTextureData(_DepthRawData);
-                _DepthImageTexture.Apply();
-
-                _KeyFrame = (_FrameCount++ % _KeyFrameInterval == 0);
-
-                // Temporal RVL compression
-                _EncodedDepthData = _Encoder.Encode(depthImage, _KeyFrame);
-                _CompressedDepthDataSize = _EncodedDepthData.Length;
-                // RVL compression
-                // _CompressedDepthDataSize = RVLDepthImageCompressor.CompressRVL(depthImage, _EncodedDepthData);
-
-                _OriginalDepthDataSize = depthImage.Length * sizeof(ushort);
-                _CompressionRatio = ((float) _OriginalDepthDataSize / _CompressedDepthDataSize);
-
-                // Temporal RVL decompression
-                _DecodedDepthData = _Decoder.Decode(_EncodedDepthData, _KeyFrame);
-                // RVL decompression
-                // RVLDepthImageCompressor.DecompressRVL(_EncodedDepthData, _DecodedDepthData);
-
-                // Visualize decoded depth image
-                Buffer.BlockCopy(_DecodedDepthData, 0, _DepthRawData, 0, _DepthRawData.Length * sizeof(byte));
-                _DecodedDepthImageTexture.LoadRawTextureData(_DepthRawData);
-                _DecodedDepthImageTexture.Apply();
-
-                // Difference of original and decoded image
-                for (int i = 0; i < depthImage.Length; i++)
-                {
-                    _Diff[i] = (short)Math.Abs(depthImage[i] - _DecodedDepthData[i]);
-                }
-
-                // Visualize diff image
-                Buffer.BlockCopy(_Diff, 0, _DepthRawData, 0, _DepthRawData.Length * sizeof(byte));
-                _DiffImageTexture.LoadRawTextureData(_DepthRawData);
-                _DiffImageTexture.Apply();
-            }
-
-            if (_KinectSensor.TransformedColorImage != null)
-            {
-                _ColorImageTexture.LoadRawTextureData(_KinectSensor.TransformedColorImage);
-                _ColorImageTexture.Apply();
-                _EncodedColorImageData = ImageConversion.EncodeToJPG(_ColorImageTexture);
-                _CompressedColorDataSize = _EncodedColorImageData.Length;
-            }
-
-            // _TextureStreamingClient.SendDepthData(CompressionMethod.TemporalRVL, _EncodedDepthData, 
-            //                                       _KinectSensor.DepthImageWidth, _KinectSensor.DepthImageHeight, _KeyFrame, _FrameCount);
-            _TextureStreamingClient.SendDepthAndColorData(CompressionMethod.TemporalRVL, _EncodedDepthData, 
-                                                          _KinectSensor.DepthImageWidth, _KinectSensor.DepthImageHeight, _KeyFrame,
-                                                          _EncodedColorImageData, _ColorImageTexture.width, _ColorImageTexture.height, _FrameCount);
         }
     }
 }

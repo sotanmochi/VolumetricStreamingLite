@@ -1,4 +1,7 @@
-﻿using System.IO;
+﻿// Copyright (c) 2020 Soichiro Sugimoto.
+// Licensed under the MIT License. See LICENSE in the project root for license information.
+
+using System.IO;
 using System.Runtime.Serialization.Formatters.Binary;
 using UnityEngine;
 using LiteNetLib;
@@ -7,7 +10,7 @@ using LiteNetLibExtension;
 
 namespace VolumetricStreamingLite.Client
 {
-    public class TextureStreamingClientLogic : MonoBehaviour, ITextureStreamingClient
+    public class StreamingClient : MonoBehaviour
     {
         [SerializeField] LiteNetLibClientMain _liteNetLibClient;
 
@@ -19,7 +22,6 @@ namespace VolumetricStreamingLite.Client
             ClientId = -1;
             _dataWriter = new NetDataWriter();
             _liteNetLibClient.OnNetworkReceived += OnNetworkReceived;
-            // _liteNetLibClient.StartClient();
         }
 
         public bool StartClient(string address, int port)
