@@ -473,7 +473,7 @@ Light:
   m_Enabled: 1
   serializedVersion: 8
   m_Type: 1
-  m_Color: {r: 1, g: 0.95686275, b: 0.8392157, a: 1}
+  m_Color: {r: 1, g: 1, b: 1, a: 1}
   m_Intensity: 1
   m_Range: 10
   m_SpotAngle: 30
@@ -1122,7 +1122,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: d45c0989744dced4bb1d63243e44ba35, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  _textureReceiverClientObject: {fileID: 733849702}
+  _ReceiverClient: {fileID: 733849703}
 --- !u!114 &559374969
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -1135,22 +1135,21 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: d2d65793fb97b854ea348a3ae603f871, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  _volumetricVideoReceiverService: {fileID: 559374968}
-  _textureReceiverClientObject: {fileID: 733849702}
+  _ReceiverService: {fileID: 559374968}
   _PointCloudRenderer: {fileID: 406995543}
   _DepthVisualizer: {fileID: 4800000, guid: ea9d8c86bbe2a7f4b9a437f75dd25491, type: 3}
   _UnlitTextureMaterial: {fileID: 2100000, guid: 0b63389eb779fd941b943ecdaf178218,
     type: 2}
   _DepthImageObject: {fileID: 408861562}
   _ColorImageObject: {fileID: 1961611296}
-  _clientIdText: {fileID: 1190128423}
-  _serverAddress: {fileID: 1856784459}
-  _serverPort: {fileID: 1520651945}
-  _connect: {fileID: 1859318818}
-  _disconnect: {fileID: 1062437231}
-  _streamingClientId: {fileID: 910303653}
-  _registerReceiver: {fileID: 43205813}
-  _unregisterReceiver: {fileID: 498678095}
+  _ClientIdText: {fileID: 1190128423}
+  _ServerAddress: {fileID: 1856784459}
+  _ServerPort: {fileID: 1520651945}
+  _Connect: {fileID: 1859318818}
+  _Disconnect: {fileID: 1062437231}
+  _StreamingClientId: {fileID: 910303653}
+  _RegisterReceiver: {fileID: 43205813}
+  _UnregisterReceiver: {fileID: 498678095}
 --- !u!4 &559374970
 Transform:
   m_ObjectHideFlags: 0
@@ -1283,7 +1282,7 @@ GameObject:
   - component: {fileID: 733849705}
   - component: {fileID: 733849703}
   m_Layer: 0
-  m_Name: TextureReceiverClient
+  m_Name: ReceiverClient
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0

@@ -1,4 +1,7 @@
-﻿using System.IO;
+﻿// Copyright (c) 2020 Soichiro Sugimoto.
+// Licensed under the MIT License. See LICENSE in the project root for license information.
+
+using System.IO;
 using System.Runtime.Serialization.Formatters.Binary;
 using UnityEngine;
 using LiteNetLib;
@@ -7,9 +10,13 @@ using LiteNetLibExtension;
 
 namespace VolumetricStreamingLite.Client
 {
-    public class TextureReceiverClientLogic : MonoBehaviour, ITextureReceiverClient
+    public delegate void OnReceivedCalibrationDelegate(K4A.CalibrationType calibrationType, K4A.Calibration calibration);
+
+    public class ReceiverClient : MonoBehaviour
     {
         [SerializeField] LiteNetLibClientMain _liteNetLibClient;
+
+        public OnReceivedCalibrationDelegate OnReceivedCalibration;
 
         public K4A.Calibration Calibration { get; private set; }
         public K4A.CalibrationType CalibrationType { get; private set; }
@@ -25,8 +32,6 @@ namespace VolumetricStreamingLite.Client
         public int ColorHeight { get; private set; }
         public byte[] ColorImageData { get; private set;  }
 
-        public OnReceivedCalibrationDelegate OnReceivedCalibration { get; set; }
-
         NetDataWriter _dataWriter;
         public int ClientId { get; private set; }
 
@@ -36,7 +41,6 @@ namespace VolumetricStreamingLite.Client
             ClientId = -1;
             _dataWriter = new NetDataWriter();
             _liteNetLibClient.OnNetworkReceived += OnNetworkReceived;
-            // _liteNetLibClient.StartClient();
         }
 
         public bool StartClient(string address, int port)
