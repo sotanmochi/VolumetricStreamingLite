@@ -211,7 +211,7 @@ namespace VolumetricStreamingLite.Client
                 _CompressedColorDataSize = _EncodedColorImageData.Length;
             }
 
-            _StreamingClient.SendDepthAndColorData(CompressionMethod.TemporalRVL, _EncodedDepthData, 
+            _StreamingClient.SendDepthAndColorData(_DepthCompressionMethod, _EncodedDepthData, 
                                                    _KinectSensor.DepthImageWidth, _KinectSensor.DepthImageHeight, _KeyFrame,
                                                    _EncodedColorImageData, _ColorImageTexture.width, _ColorImageTexture.height, _FrameCount);
         }
