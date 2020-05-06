@@ -11,8 +11,8 @@ Real-time Volumetric Video Streaming Implementation using Unity and LiteNetLib (
 - Amazon Linux (Amazon GameLift)
 
 ## Third party assets
-このプロジェクトには、以下のアセットが含まれています。  
-The following assets are included in this project.
+以下のアセットをUnityプロジェクトに含める必要があります。  
+You need to include the following assets in your Unity project.
 
 - [AzureKinect4Unity](https://github.com/sotanmochi/AzureKinect4Unity)
   Licensed under the MIT License. Copyright (c) 2020 Soichiro Sugimoto.
