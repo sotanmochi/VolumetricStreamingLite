@@ -1379,9 +1379,9 @@ MonoBehaviour:
   _Connect: {fileID: 8303882743432356890}
   _Disconnect: {fileID: 8303882742098645335}
   _FrameRateDropdown: {fileID: 1535567327}
+  _CompressionMethodDropdown: {fileID: 100942846}
   _StartStreaming: {fileID: 8303882741750535309}
   _StopStreaming: {fileID: 8303882741534157175}
-  _CompressionMethodDropdown: {fileID: 100942846}
 --- !u!4 &590931908
 Transform:
   m_ObjectHideFlags: 0
@@ -3611,7 +3611,7 @@ MonoBehaviour:
     m_HorizontalOverflow: 0
     m_VerticalOverflow: 0
     m_LineSpacing: 1
-  m_Text: Compressed depth image using Temporal RVL
+  m_Text: Depth image using Temporal RVL
 --- !u!222 &2019683108
 CanvasRenderer:
   m_ObjectHideFlags: 0
