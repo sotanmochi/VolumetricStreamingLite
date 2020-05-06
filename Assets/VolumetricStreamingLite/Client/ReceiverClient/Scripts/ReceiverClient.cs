@@ -1,6 +1,7 @@
 ﻿// Copyright (c) 2020 Soichiro Sugimoto.
 // Licensed under the MIT License. See LICENSE in the project root for license information.
 
+using System.Collections.Generic;
 using System.IO;
 using System.Runtime.Serialization.Formatters.Binary;
 using UnityEngine;
@@ -12,35 +13,46 @@ namespace VolumetricStreamingLite.Client
 {
     public delegate void OnReceivedCalibrationDelegate(K4A.CalibrationType calibrationType, K4A.Calibration calibration);
 
+    public class Frame
+    {
+        public int FrameCount;
+        public bool IsKeyFrame;
+        public CompressionMethod CompressionMethod;
+        public byte[] EncodedDepthData;
+        public byte[] ColorImageData;
+
+        public Frame(int frameCount, bool isKeyFrame, CompressionMethod compressionMethod, byte[] encodedDepthData, byte[] colorImageData)
+        {
+            this.FrameCount = frameCount;
+            this.IsKeyFrame = isKeyFrame;
+            this.CompressionMethod = compressionMethod;
+            this.EncodedDepthData = encodedDepthData;
+            this.ColorImageData = colorImageData;
+        }
+    }
+
     public class ReceiverClient : MonoBehaviour
     {
         [SerializeField] LiteNetLibClientMain _liteNetLibClient;
 
+        public int ClientId { get; private set; }
         public OnReceivedCalibrationDelegate OnReceivedCalibration;
 
-        public K4A.Calibration Calibration { get; private set; }
-        public K4A.CalibrationType CalibrationType { get; private set; }
-
-        public int FrameCount { get; private set; }
-        public bool IsKeyFrame { get; private set; }
         public int DepthWidth { get; private set; }
         public int DepthHeight { get; private set; }
         public int DepthImageSize { get; private set; }
-        public CompressionMethod CompressionMethod { get; private set; }
-        public byte[] EncodedDepthData { get; private set;  }
         public int ColorWidth { get; private set; }
         public int ColorHeight { get; private set; }
-        public byte[] ColorImageData { get; private set;  }
 
         NetDataWriter _dataWriter;
-        public int ClientId { get; private set; }
+        Queue<Frame> _frameQueue;
 
         void Awake()
         {
-            FrameCount = -1;
             ClientId = -1;
-            _dataWriter = new NetDataWriter();
             _liteNetLibClient.OnNetworkReceived += OnNetworkReceived;
+            _dataWriter = new NetDataWriter();
+            _frameQueue = new Queue<Frame>();
         }
 
         public bool StartClient(string address, int port)
@@ -95,9 +107,6 @@ namespace VolumetricStreamingLite.Client
 
             K4A.Calibration calibration = (K4A.Calibration)binaryFormatter.Deserialize(memoryStream);
 
-            CalibrationType = calibrationType;
-            Calibration = calibration;
-
             OnReceivedCalibration?.Invoke(calibrationType, calibration);
         }
 
@@ -142,31 +151,36 @@ namespace VolumetricStreamingLite.Client
         public void OnReceivedDepthData(int frameCount, bool isKeyFrame, int depthWidth, int depthHeight, 
                                         CompressionMethod compressionMethod, byte[] encodedDepthData)
         {
-            FrameCount = frameCount;
-            IsKeyFrame = isKeyFrame;
             DepthWidth = depthWidth;
             DepthHeight = depthHeight;
-            CompressionMethod = compressionMethod;
-            EncodedDepthData = encodedDepthData;
-
             DepthImageSize = depthWidth * DepthHeight;
+
+            _frameQueue.Enqueue(new Frame(frameCount, isKeyFrame, compressionMethod, encodedDepthData, null));
         }
 
         public void OnReceivedDepthAndColorData(int frameCount, bool isKeyFrame, int depthWidth, int depthHeight,
                                                 CompressionMethod compressionMethod, byte[] encodedDepthData, 
                                                 int colorWidth, int colorHeight, byte[] colorImageData)
         {
-            FrameCount = frameCount;
-            IsKeyFrame = isKeyFrame;
             DepthWidth = depthWidth;
             DepthHeight = depthHeight;
-            CompressionMethod = compressionMethod;
-            EncodedDepthData = encodedDepthData;
+            DepthImageSize = depthWidth * DepthHeight;
             ColorWidth = colorWidth;
             ColorHeight = colorHeight;
-            ColorImageData = colorImageData;
 
-            DepthImageSize = depthWidth * DepthHeight;
+            _frameQueue.Enqueue(new Frame(frameCount, isKeyFrame, compressionMethod, encodedDepthData, colorImageData));
+        }
+
+        public Frame GetFrame()
+        {
+            if (_frameQueue.Count > 0)
+            {
+                return _frameQueue.Dequeue();
+            }
+            else
+            {
+                return null;
+            }
         }
 
         public void RegisterTextureReceiver(int streamingClientId)

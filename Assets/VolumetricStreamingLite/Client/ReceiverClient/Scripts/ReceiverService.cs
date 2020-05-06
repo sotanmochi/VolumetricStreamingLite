@@ -28,7 +28,6 @@ namespace VolumetricStreamingLite.Client
         public byte[] ColorImageData { get { return _ColorImageData; } }
 
         bool _Receiving = false;
-        int _ProcessedFrameCount = -1;
 
         public void Connect(string address, int port)
         {
@@ -99,18 +98,18 @@ namespace VolumetricStreamingLite.Client
                 _ColorImageTexture = new Texture2D(width, height, TextureFormat.BGRA32, false);
             }
 
-            if (_ReceiverClient.FrameCount >= 0 &&
-                _ProcessedFrameCount != _ReceiverClient.FrameCount)
+            Frame frame = _ReceiverClient.GetFrame();
+            if (frame != null)
             {
-                bool isKeyFrame = _ReceiverClient.IsKeyFrame;
-                byte[] encodedDepthData = _ReceiverClient.EncodedDepthData;
+                bool isKeyFrame = frame.IsKeyFrame;
+                byte[] encodedDepthData = frame.EncodedDepthData;
 
-                if (_ReceiverClient.CompressionMethod == CompressionMethod.TemporalRVL)
+                if (frame.CompressionMethod == CompressionMethod.TemporalRVL)
                 {
                     // Temporal RVL decompression
                     _DecodedDepthData = _Decoder.Decode(encodedDepthData, isKeyFrame);
                 }
-                else if (_ReceiverClient.CompressionMethod == CompressionMethod.RVL)
+                else if (frame.CompressionMethod == CompressionMethod.RVL)
                 {
                     // RVL decompression
                     RVLDepthImageCompressor.DecompressRVL(encodedDepthData, _DecodedDepthData);
@@ -120,11 +119,9 @@ namespace VolumetricStreamingLite.Client
                 _DepthImageTexture.LoadRawTextureData(_DepthImageRawData);
                 _DepthImageTexture.Apply();
 
-                _ColorImageData = _ReceiverClient.ColorImageData;
+                _ColorImageData = frame.ColorImageData;
                 _ColorImageTexture.LoadImage(_ColorImageData);
                 _ColorImageTexture.Apply();
-
-                _ProcessedFrameCount = _ReceiverClient.FrameCount;
             }
         }
     }
