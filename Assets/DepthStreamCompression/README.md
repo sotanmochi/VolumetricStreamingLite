@@ -1,11 +1,11 @@
 # Depth Stream Compression
 
 ## License
-- RVLDepthImageCompressor.cs is licensed under the MIT License.  
+- RVL.cs is licensed under the MIT License.  
   Copyright (c) 2017 Andrew D. Wilson  
   Copyright (c) 2020 Soichiro Sugimoto  
 
-- TemporalRVLDepthStreamCompression.cs is licensed under the MIT License.  
+- TemporalRVL.cs is licensed under the MIT License.  
   Copyright (c) 2020 Hanseul Jun  
   Copyright (c) 2020 Soichiro Sugimoto  
 

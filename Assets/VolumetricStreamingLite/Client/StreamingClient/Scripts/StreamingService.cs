@@ -42,8 +42,8 @@ namespace VolumetricStreamingLite.Client
         K4A.Calibration _Calibration;
         K4A.CalibrationType _CalibrationType;
 
-        TemporalRVLDepthStreamEncoder _Encoder;
-        TemporalRVLDepthStreamDecoder _Decoder;
+        TemporalRVLEncoder _TrvlEncoder;
+        TemporalRVLDecoder _TrvlDecoder;
 
         int _DepthImageSize;
         byte[] _DepthRawData;
@@ -89,8 +89,8 @@ namespace VolumetricStreamingLite.Client
                 _DiffImageTexture = new Texture2D(_KinectSensor.DepthImageWidth, _KinectSensor.DepthImageHeight, TextureFormat.R16, false);
                 _ColorImageTexture = new Texture2D(_KinectSensor.DepthImageWidth, _KinectSensor.DepthImageHeight, TextureFormat.BGRA32, false);
 
-                _Encoder = new TemporalRVLDepthStreamEncoder(_DepthImageSize, 10, 2);
-                _Decoder = new TemporalRVLDepthStreamDecoder(_DepthImageSize);
+                _TrvlEncoder = new TemporalRVLEncoder(_DepthImageSize, 10, 2);
+                _TrvlDecoder = new TemporalRVLDecoder(_DepthImageSize);
 
                 CameraCalibration deviceDepthCameraCalibration = _KinectSensor.DeviceCalibration.DepthCameraCalibration;
                 CameraCalibration deviceColorCameraCalibration = _KinectSensor.DeviceCalibration.ColorCameraCalibration;
@@ -167,19 +167,19 @@ namespace VolumetricStreamingLite.Client
                 if (_DepthCompressionMethod == CompressionMethod.TemporalRVL)
                 {
                     // Temporal RVL compression
-                    _EncodedDepthData = _Encoder.Encode(depthImage, _KeyFrame);
+                    _EncodedDepthData = _TrvlEncoder.Encode(depthImage, _KeyFrame);
                     _CompressedDepthDataSize = _EncodedDepthData.Length;                    
 
                     // Temporal RVL decompression
-                    _DecodedDepthData = _Decoder.Decode(_EncodedDepthData, _KeyFrame);
+                    _DecodedDepthData = _TrvlDecoder.Decode(_EncodedDepthData, _KeyFrame);
                 }
                 else if (_DepthCompressionMethod == CompressionMethod.RVL)
                 {
                     // RVL compression
-                    _CompressedDepthDataSize = RVLDepthImageCompressor.CompressRVL(depthImage, _EncodedDepthData);                    
+                    _CompressedDepthDataSize = RVL.CompressRVL(depthImage, _EncodedDepthData);                    
 
                     // RVL decompression
-                    RVLDepthImageCompressor.DecompressRVL(_EncodedDepthData, _DecodedDepthData);
+                    RVL.DecompressRVL(_EncodedDepthData, _DecodedDepthData);
                 }
 
                 _OriginalDepthDataSize = depthImage.Length * sizeof(ushort);

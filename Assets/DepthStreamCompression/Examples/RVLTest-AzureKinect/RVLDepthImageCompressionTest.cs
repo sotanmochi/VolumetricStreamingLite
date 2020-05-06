@@ -88,7 +88,7 @@ namespace DepthStreamCompression.Test
                 _Stopwatch.Start();
 
                 // RVL compression
-                int encodedDataBytes = RVLDepthImageCompressor.CompressRVL(depthImage, _EncodedDepthData);
+                int encodedDataBytes = RVL.CompressRVL(depthImage, _EncodedDepthData);
 
                 _Stopwatch.Stop();
                 long encodingTimeMillseconds = _Stopwatch.ElapsedMilliseconds;
@@ -97,7 +97,7 @@ namespace DepthStreamCompression.Test
                 _Stopwatch.Start();
 
                 // RVL decompression
-                RVLDepthImageCompressor.DecompressRVL(_EncodedDepthData, _DecodedDepthData);
+                RVL.DecompressRVL(_EncodedDepthData, _DecodedDepthData);
 
                 _Stopwatch.Stop();
                 long decodingTimeMillseconds = _Stopwatch.ElapsedMilliseconds;

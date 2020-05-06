@@ -35,8 +35,8 @@ namespace DepthStreamCompression.Test
         short[] _DecodedDepthData;
         short[] _Diff;
 
-        TemporalRVLDepthStreamEncoder _Encoder;
-        TemporalRVLDepthStreamDecoder _Decoder;
+        TemporalRVLEncoder _TrvlEncoder;
+        TemporalRVLDecoder _TrvlDecoder;
         int _FrameCount = 0;
         int _KeyFrameInterval = 30;
 
@@ -77,8 +77,8 @@ namespace DepthStreamCompression.Test
                 Debug.Log("ColorResolution: " + _KinectSensor.ColorImageWidth + "x" + _KinectSensor.ColorImageHeight);
                 Debug.Log("DepthResolution: " + _KinectSensor.DepthImageWidth + "x" + _KinectSensor.DepthImageHeight);
 
-                _Encoder = new TemporalRVLDepthStreamEncoder(depthImageSize, 10, 2);
-                _Decoder = new TemporalRVLDepthStreamDecoder(depthImageSize);
+                _TrvlEncoder = new TemporalRVLEncoder(depthImageSize, 10, 2);
+                _TrvlDecoder = new TemporalRVLDecoder(depthImageSize);
             }
         }
 
@@ -98,7 +98,7 @@ namespace DepthStreamCompression.Test
                 _Stopwatch.Start();
 
                 // Temporal RVL compression
-                _EncodedDepthData = _Encoder.Encode(depthImage, keyFrame);
+                _EncodedDepthData = _TrvlEncoder.Encode(depthImage, keyFrame);
 
                 _Stopwatch.Stop();
                 long encodingTimeMillseconds = _Stopwatch.ElapsedMilliseconds;
@@ -107,7 +107,7 @@ namespace DepthStreamCompression.Test
                 _Stopwatch.Start();
 
                 // Temporal RVL decompression
-                _DecodedDepthData = _Decoder.Decode(_EncodedDepthData, keyFrame);
+                _DecodedDepthData = _TrvlDecoder.Decode(_EncodedDepthData, keyFrame);
 
                 _Stopwatch.Stop();
                 long decodingTimeMillseconds = _Stopwatch.ElapsedMilliseconds;

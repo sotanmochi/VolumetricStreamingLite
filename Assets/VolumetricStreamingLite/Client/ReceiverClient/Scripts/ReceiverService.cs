@@ -19,7 +19,7 @@ namespace VolumetricStreamingLite.Client
         Texture2D _ColorImageTexture;
         public Texture2D ColorImageTexture { get { return _ColorImageTexture; } }
 
-        TemporalRVLDepthStreamDecoder _Decoder;
+        TemporalRVLDecoder _TrvlDecoder;
         int _DepthImageSize = 0;
         short[] _DecodedDepthData;
         byte[] _DepthImageRawData;
@@ -76,7 +76,7 @@ namespace VolumetricStreamingLite.Client
             if (_DepthImageSize != _ReceiverClient.DepthImageSize)
             {
                 _DepthImageSize = _ReceiverClient.DepthImageSize;
-                _Decoder = new TemporalRVLDepthStreamDecoder(_DepthImageSize);
+                _TrvlDecoder = new TemporalRVLDecoder(_DepthImageSize);
                 _DepthImageRawData = new byte[_DepthImageSize * sizeof(short)];
             }
 
@@ -107,12 +107,12 @@ namespace VolumetricStreamingLite.Client
                 if (frame.CompressionMethod == CompressionMethod.TemporalRVL)
                 {
                     // Temporal RVL decompression
-                    _DecodedDepthData = _Decoder.Decode(encodedDepthData, isKeyFrame);
+                    _DecodedDepthData = _TrvlDecoder.Decode(encodedDepthData, isKeyFrame);
                 }
                 else if (frame.CompressionMethod == CompressionMethod.RVL)
                 {
                     // RVL decompression
-                    RVLDepthImageCompressor.DecompressRVL(encodedDepthData, _DecodedDepthData);
+                    RVL.DecompressRVL(encodedDepthData, _DecodedDepthData);
                 }
 
                 Buffer.BlockCopy(_DecodedDepthData, 0, _DepthImageRawData, 0, _DepthImageRawData.Length * sizeof(byte));

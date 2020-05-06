@@ -42,7 +42,7 @@ using System;
 
 namespace DepthStreamCompression
 {
-    public class RVLDepthImageCompressor
+    public class RVL
     {
         public static int CompressRVL(short[] input, byte[] output)
         {
