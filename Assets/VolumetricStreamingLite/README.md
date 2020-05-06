@@ -18,7 +18,7 @@ Real-time Volumetric Video Streaming Implementation using Unity and LiteNetLib (
 以下のアセットをUnityプロジェクトに含める必要があります。  
 You need to include the following assets in your Unity project.
 
-- [AzureKinect4Unity](https://github.com/sotanmochi/AzureKinect4Unity)
+- [AzureKinect4Unity](https://github.com/sotanmochi/AzureKinect4Unity)  
   Licensed under the MIT License. Copyright (c) 2020 Soichiro Sugimoto.
 
 - [DepthStreamCompression](https://github.com/sotanmochi/DepthStreamCompression)  
