@@ -1,6 +1,10 @@
 # Volumetric Streaming Lite
 Real-time Volumetric Video Streaming Implementation using Unity and LiteNetLib (Reliable UDP Library).
 
+[Watch on Youtube](https://youtu.be/61R0lydO-N4)
+
+<img src="./Assets/VolumetricStreamingLite/VolumetricStreamingLite.jpg" width="50%">
+
 ## Tested environment
 ### Client
 - Unity 2018.4.21f1
