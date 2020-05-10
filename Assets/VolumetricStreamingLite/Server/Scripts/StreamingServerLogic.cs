@@ -183,7 +183,7 @@ namespace VolumetricStreamingLite.Server
 
             foreach (int receiverClientId in _streamingReceivers[streamingClientId])
             {
-                _liteNetLibServer.SendData(receiverClientId, _dataWriter, DeliveryMethod.ReliableOrdered);
+                _liteNetLibServer.SendData(receiverClientId, _dataWriter, DeliveryMethod.ReliableUnordered);
             }
         }
 
@@ -224,7 +224,7 @@ namespace VolumetricStreamingLite.Server
 
             foreach (int receiverClientId in _streamingReceivers[streamingClientId])
             {
-                _liteNetLibServer.SendData(receiverClientId, _dataWriter, DeliveryMethod.ReliableOrdered);
+                _liteNetLibServer.SendData(receiverClientId, _dataWriter, DeliveryMethod.ReliableUnordered);
             }
         }
 

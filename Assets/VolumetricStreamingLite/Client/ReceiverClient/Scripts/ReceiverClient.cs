@@ -46,6 +46,7 @@ namespace VolumetricStreamingLite.Client
 
         NetDataWriter _dataWriter;
         Queue<Frame> _frameQueue;
+        int _frameCount = -1;
 
         void Awake()
         {
@@ -168,7 +169,15 @@ namespace VolumetricStreamingLite.Client
             ColorWidth = colorWidth;
             ColorHeight = colorHeight;
 
-            _frameQueue.Enqueue(new Frame(frameCount, isKeyFrame, compressionMethod, encodedDepthData, colorImageData));
+            if (frameCount > _frameCount)
+            {
+                _frameCount = frameCount;
+                _frameQueue.Enqueue(new Frame(frameCount, isKeyFrame, compressionMethod, encodedDepthData, colorImageData));
+            }
+            else
+            {
+                Debug.Log("Frame: " + frameCount + "has been delayed.");
+            }
         }
 
         public Frame GetFrame()

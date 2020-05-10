@@ -78,7 +78,7 @@ namespace VolumetricStreamingLite.Client
             _dataWriter.Put(encodedDepthData.Length);
             _dataWriter.Put(encodedDepthData);
 
-            _liteNetLibClient.SendData(_dataWriter, DeliveryMethod.ReliableOrdered);
+            _liteNetLibClient.SendData(_dataWriter, DeliveryMethod.ReliableUnordered);
         }
 
         public void SendDepthAndColorData(CompressionMethod compressionMethod, byte[] encodedDepthData, int depthWidth, int depthHeight, bool isKeyFrame,
@@ -98,7 +98,7 @@ namespace VolumetricStreamingLite.Client
             _dataWriter.Put(colorImageData.Length);
             _dataWriter.Put(colorImageData);
 
-            _liteNetLibClient.SendData(_dataWriter, DeliveryMethod.ReliableOrdered);
+            _liteNetLibClient.SendData(_dataWriter, DeliveryMethod.ReliableUnordered);
         }
     }
 }
