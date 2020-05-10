@@ -2511,7 +2511,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   ColorImageFormat: 3
   ColorCameraMode: 4
-  DepthCameraMode: 2
+  DepthCameraMode: 1
 --- !u!4 &1067477627
 Transform:
   m_ObjectHideFlags: 0
