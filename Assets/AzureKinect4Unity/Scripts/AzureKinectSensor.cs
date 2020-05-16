@@ -6,11 +6,11 @@ using Microsoft.Azure.Kinect.Sensor;
 
 namespace AzureKinect4Unity
 {
-    public class AzureKinectSensor : MonoBehaviour
+    public class AzureKinectSensor
     {
-        public ImageFormat ColorImageFormat = ImageFormat.ColorBGRA32;
-        public ColorCameraMode ColorCameraMode = ColorCameraMode._1920_x_1080_30fps;
-        public DepthCameraMode DepthCameraMode = DepthCameraMode._512_x_512_30fps;
+        private ImageFormat _ColorImageFormat = ImageFormat.ColorBGRA32;
+        private ColorCameraMode _ColorCameraMode = ColorCameraMode._1920_x_1080_30fps;
+        private DepthCameraMode _DepthCameraMode = DepthCameraMode._512_x_512_30fps;
 
         private Device _KinectSensor;
         public Device Device { get { return _KinectSensor; } }
@@ -42,22 +42,36 @@ namespace AzureKinect4Unity
         private Short3[] _PointCloud = null;
         public Short3[] PointCloud { get { return _PointCloud; } }
 
-        public void OpenSensor(int deviceIndex = 0)
+        public static int GetDeviceCount()
+        {
+            int deviceCount = Device.GetInstalledCount();
+            Debug.Log("Azure Kinect Device Count: " + deviceCount);
+            return deviceCount;
+        }
+
+        public AzureKinectSensor(ImageFormat colorImageFormat, ColorCameraMode colorCameraMode, DepthCameraMode depthCameraMode)
+        {
+            this._ColorImageFormat = colorImageFormat;
+            this._ColorCameraMode = colorCameraMode;
+            this._DepthCameraMode = depthCameraMode;
+        }
+
+        public bool OpenSensor(int deviceIndex = 0)
         {
             _KinectSensor = Device.Open(deviceIndex);
             if (_KinectSensor == null)
             {
                 Debug.LogError("AzureKinect cannot be opened.");
-                return;
+                return false;
             }
 
             DeviceConfiguration kinectConfig = new DeviceConfiguration();
-            kinectConfig.ColorFormat = ColorImageFormat;
-            kinectConfig.ColorResolution = (ColorResolution) ColorCameraMode;
-            kinectConfig.DepthMode = (DepthMode) DepthCameraMode;
+            kinectConfig.ColorFormat = _ColorImageFormat;
+            kinectConfig.ColorResolution = (ColorResolution) _ColorCameraMode;
+            kinectConfig.DepthMode = (DepthMode) _DepthCameraMode;
 
-            if (ColorCameraMode != ColorCameraMode._4096_x_3072_15fps
-             && DepthCameraMode != DepthCameraMode._1024x1024_15fps)
+            if (_ColorCameraMode != ColorCameraMode._4096_x_3072_15fps
+             && _DepthCameraMode != DepthCameraMode._1024x1024_15fps)
             {
                 kinectConfig.CameraFPS = FPS.FPS30;
             }
@@ -79,6 +93,8 @@ namespace AzureKinect4Unity
             CameraCalibration depthCamera = _DeviceCalibration.DepthCameraCalibration;
             _DepthImageWidth = depthCamera.ResolutionWidth;
             _DepthImageHeight = depthCamera.ResolutionHeight;
+
+            return true;
         }
 
         public void CloseSensor()

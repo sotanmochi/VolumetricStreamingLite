@@ -12,6 +12,7 @@ namespace VolumetricStreamingLite.Client
     public class StreamingService : MonoBehaviour
     {
         [SerializeField] AzureKinectManager _AzureKinectManager;
+        [SerializeField] int _DeviceNumber = 0;
         [SerializeField] StreamingClient _StreamingClient;
 
         public int ClientId { get { return _StreamingClient.ClientId ;} }
@@ -73,39 +74,43 @@ namespace VolumetricStreamingLite.Client
 
         public void Initialize()
         {
-            _KinectSensor = _AzureKinectManager.Sensor;
-            if (_KinectSensor != null)
+            var kinectSensors = _AzureKinectManager.SensorList;
+            if (_DeviceNumber < kinectSensors.Count)
             {
-                Debug.Log("ColorResolution: " + _KinectSensor.ColorImageWidth + "x" + _KinectSensor.ColorImageHeight);
-                Debug.Log("DepthResolution: " + _KinectSensor.DepthImageWidth + "x" + _KinectSensor.DepthImageHeight);
+                _KinectSensor = kinectSensors[_DeviceNumber];
+                if (_KinectSensor != null)
+                {
+                    Debug.Log("ColorResolution: " + _KinectSensor.ColorImageWidth + "x" + _KinectSensor.ColorImageHeight);
+                    Debug.Log("DepthResolution: " + _KinectSensor.DepthImageWidth + "x" + _KinectSensor.DepthImageHeight);
 
-                _DepthImageSize = _KinectSensor.DepthImageWidth * _KinectSensor.DepthImageHeight;
-                _DepthRawData = new byte[_DepthImageSize * sizeof(short)];
-                _Diff = new short[_DepthImageSize];
-                _EncodedColorImageData = new byte[_DepthImageSize];
+                    _DepthImageSize = _KinectSensor.DepthImageWidth * _KinectSensor.DepthImageHeight;
+                    _DepthRawData = new byte[_DepthImageSize * sizeof(short)];
+                    _Diff = new short[_DepthImageSize];
+                    _EncodedColorImageData = new byte[_DepthImageSize];
 
-                _DepthImageTexture = new Texture2D(_KinectSensor.DepthImageWidth, _KinectSensor.DepthImageHeight, TextureFormat.R16, false);
-                _DecodedDepthImageTexture = new Texture2D(_KinectSensor.DepthImageWidth, _KinectSensor.DepthImageHeight, TextureFormat.R16, false);
-                _DiffImageTexture = new Texture2D(_KinectSensor.DepthImageWidth, _KinectSensor.DepthImageHeight, TextureFormat.R16, false);
-                _ColorImageTexture = new Texture2D(_KinectSensor.DepthImageWidth, _KinectSensor.DepthImageHeight, TextureFormat.BGRA32, false);
+                    _DepthImageTexture = new Texture2D(_KinectSensor.DepthImageWidth, _KinectSensor.DepthImageHeight, TextureFormat.R16, false);
+                    _DecodedDepthImageTexture = new Texture2D(_KinectSensor.DepthImageWidth, _KinectSensor.DepthImageHeight, TextureFormat.R16, false);
+                    _DiffImageTexture = new Texture2D(_KinectSensor.DepthImageWidth, _KinectSensor.DepthImageHeight, TextureFormat.R16, false);
+                    _ColorImageTexture = new Texture2D(_KinectSensor.DepthImageWidth, _KinectSensor.DepthImageHeight, TextureFormat.BGRA32, false);
 
-                _TrvlEncoder = new TemporalRVLEncoder(_DepthImageSize, 10, 2);
-                _TrvlDecoder = new TemporalRVLDecoder(_DepthImageSize);
+                    _TrvlEncoder = new TemporalRVLEncoder(_DepthImageSize, 10, 2);
+                    _TrvlDecoder = new TemporalRVLDecoder(_DepthImageSize);
 
-                CameraCalibration deviceDepthCameraCalibration = _KinectSensor.DeviceCalibration.DepthCameraCalibration;
-                CameraCalibration deviceColorCameraCalibration = _KinectSensor.DeviceCalibration.ColorCameraCalibration;
+                    CameraCalibration deviceDepthCameraCalibration = _KinectSensor.DeviceCalibration.DepthCameraCalibration;
+                    CameraCalibration deviceColorCameraCalibration = _KinectSensor.DeviceCalibration.ColorCameraCalibration;
 
-                _Calibration = new K4A.Calibration();
-                _Calibration.DepthCameraCalibration = CreateCalibrationCamera(deviceDepthCameraCalibration, _KinectSensor.DepthImageWidth, _KinectSensor.DepthImageHeight);
-                _Calibration.ColorCameraCalibration = CreateCalibrationCamera(deviceColorCameraCalibration, _KinectSensor.ColorImageWidth, _KinectSensor.ColorImageHeight);
+                    _Calibration = new K4A.Calibration();
+                    _Calibration.DepthCameraCalibration = CreateCalibrationCamera(deviceDepthCameraCalibration, _KinectSensor.DepthImageWidth, _KinectSensor.DepthImageHeight);
+                    _Calibration.ColorCameraCalibration = CreateCalibrationCamera(deviceColorCameraCalibration, _KinectSensor.ColorImageWidth, _KinectSensor.ColorImageHeight);
 
-                _CalibrationType = K4A.CalibrationType.Depth; // Color to depth
+                    _CalibrationType = K4A.CalibrationType.Depth; // Color to depth
 
-                _Initialized = true;
-            }
-            else
-            {
-                Debug.LogError("KinectSensor is null!");
+                    _Initialized = true;
+                }
+                else
+                {
+                    Debug.LogError("KinectSensor is null!");
+                }
             }
         }
 

@@ -1,4 +1,5 @@
-﻿using UnityEngine;
+﻿using System.Collections.Generic;
+using UnityEngine;
 using Microsoft.Azure.Kinect.Sensor;
 
 namespace AzureKinect4Unity
@@ -7,6 +8,7 @@ namespace AzureKinect4Unity
     public class AzureKinectPointCloudVisualizer : MonoBehaviour
     {
         [SerializeField] AzureKinectManager _AzureKinectManager;
+        [SerializeField] int _DeviceNumber = 0;
 
         AzureKinectSensor _KinectSensor;
 
@@ -15,39 +17,47 @@ namespace AzureKinect4Unity
 
         void Start()
         {
-            _KinectSensor = _AzureKinectManager.Sensor;
-            if (_KinectSensor != null)
+            List<AzureKinectSensor> kinectSensors = _AzureKinectManager.SensorList;
+            if (_DeviceNumber < kinectSensors.Count)
             {
-                Debug.Log("ColorResolution: " + _KinectSensor.ColorImageWidth + "x" + _KinectSensor.ColorImageHeight);
-                Debug.Log("DepthResolution: " + _KinectSensor.DepthImageWidth + "x" + _KinectSensor.DepthImageHeight);
+                _KinectSensor = _AzureKinectManager.SensorList[_DeviceNumber];
+                if (_KinectSensor != null)
+                {
+                    Debug.Log("ColorResolution: " + _KinectSensor.ColorImageWidth + "x" + _KinectSensor.ColorImageHeight);
+                    Debug.Log("DepthResolution: " + _KinectSensor.DepthImageWidth + "x" + _KinectSensor.DepthImageHeight);
 
-                _ColorImageTexture = new Texture2D(_KinectSensor.ColorImageWidth, _KinectSensor.ColorImageHeight, TextureFormat.BGRA32, false);
+                    _ColorImageTexture = new Texture2D(_KinectSensor.ColorImageWidth, _KinectSensor.ColorImageHeight, TextureFormat.BGRA32, false);
 
-                _PointCloudMesh = GetComponent<PointCloudMesh>();
-                _PointCloudMesh.GenerateMesh(_KinectSensor.ColorImageWidth, _KinectSensor.ColorImageHeight);
+                    _PointCloudMesh = GetComponent<PointCloudMesh>();
+                    _PointCloudMesh.GenerateMesh(_KinectSensor.ColorImageWidth, _KinectSensor.ColorImageHeight);
+                }
             }
         }
 
         void Update()
         {
-            if (_KinectSensor.RawColorImage != null)
+            _KinectSensor = _AzureKinectManager.SensorList[_DeviceNumber];
+            if (_KinectSensor != null)
             {
-                _ColorImageTexture.LoadRawTextureData(_KinectSensor.RawColorImage);
-                _ColorImageTexture.Apply();
-            }
-
-            if (_KinectSensor.PointCloud != null)
-            {
-                Short3[] pointCloud = _KinectSensor.PointCloud;
-                
-                Vector3[] vertices = new Vector3[pointCloud.Length];
-                for (int i = 0; i < vertices.Length; i++)
+                if (_KinectSensor.RawColorImage != null)
                 {
-                    vertices[i] = new Vector3(pointCloud[i].X * 0.001f, pointCloud[i].Y * -0.001f, pointCloud[i].Z * 0.001f);
+                    _ColorImageTexture.LoadRawTextureData(_KinectSensor.RawColorImage);
+                    _ColorImageTexture.Apply();
                 }
 
-                _PointCloudMesh.UpdateVertices(vertices);
-                _PointCloudMesh.UpdateColorTexture(_KinectSensor.RawColorImage);
+                if (_KinectSensor.PointCloud != null)
+                {
+                    Short3[] pointCloud = _KinectSensor.PointCloud;
+                    
+                    Vector3[] vertices = new Vector3[pointCloud.Length];
+                    for (int i = 0; i < vertices.Length; i++)
+                    {
+                        vertices[i] = new Vector3(pointCloud[i].X * 0.001f, pointCloud[i].Y * -0.001f, pointCloud[i].Z * 0.001f);
+                    }
+
+                    _PointCloudMesh.UpdateVertices(vertices);
+                    _PointCloudMesh.UpdateColorTexture(_KinectSensor.RawColorImage);
+                }
             }
         }
     }

@@ -11,6 +11,7 @@ namespace VolumetricStreamingLite
     public class PointCloudRendererTest : MonoBehaviour
     {
         [SerializeField] AzureKinectManager _AzureKinectManager;
+        [SerializeField] int _DeviceNumber = 0;
 
         AzureKinectSensor _KinectSensor;
 
@@ -26,34 +27,38 @@ namespace VolumetricStreamingLite
 
         void Start()
         {
-            _KinectSensor = _AzureKinectManager.Sensor;
-            if (_KinectSensor != null)
+            var kinectSensors = _AzureKinectManager.SensorList;
+            if (_DeviceNumber < kinectSensors.Count)
             {
-                Debug.Log("ColorResolution: " + _KinectSensor.ColorImageWidth + "x" + _KinectSensor.ColorImageHeight);
-                Debug.Log("DepthResolution: " + _KinectSensor.DepthImageWidth + "x" + _KinectSensor.DepthImageHeight);
+                _KinectSensor = kinectSensors[_DeviceNumber];
+                if (_KinectSensor != null)
+                {
+                    Debug.Log("ColorResolution: " + _KinectSensor.ColorImageWidth + "x" + _KinectSensor.ColorImageHeight);
+                    Debug.Log("DepthResolution: " + _KinectSensor.DepthImageWidth + "x" + _KinectSensor.DepthImageHeight);
 
-                _TransformedColorImageTexture = new Texture2D(_KinectSensor.DepthImageWidth, _KinectSensor.DepthImageHeight, TextureFormat.BGRA32, false);
-                _DepthRawData = new byte[_KinectSensor.DepthImageWidth * _KinectSensor.DepthImageHeight * sizeof(ushort)];
-                _DepthImageTexture = new Texture2D(_KinectSensor.DepthImageWidth, _KinectSensor.DepthImageHeight, TextureFormat.R16, false);
+                    _TransformedColorImageTexture = new Texture2D(_KinectSensor.DepthImageWidth, _KinectSensor.DepthImageHeight, TextureFormat.BGRA32, false);
+                    _DepthRawData = new byte[_KinectSensor.DepthImageWidth * _KinectSensor.DepthImageHeight * sizeof(ushort)];
+                    _DepthImageTexture = new Texture2D(_KinectSensor.DepthImageWidth, _KinectSensor.DepthImageHeight, TextureFormat.R16, false);
 
-                _ColorImageTexture = new Texture2D(_KinectSensor.ColorImageWidth, _KinectSensor.ColorImageHeight, TextureFormat.BGRA32, false);
-                _TransformedDepthRawData = new byte[_KinectSensor.ColorImageWidth * _KinectSensor.ColorImageHeight * sizeof(ushort)];
-                _TransformedDepthImageTexture = new Texture2D(_KinectSensor.ColorImageWidth, _KinectSensor.ColorImageHeight, TextureFormat.R16, false);
+                    _ColorImageTexture = new Texture2D(_KinectSensor.ColorImageWidth, _KinectSensor.ColorImageHeight, TextureFormat.BGRA32, false);
+                    _TransformedDepthRawData = new byte[_KinectSensor.ColorImageWidth * _KinectSensor.ColorImageHeight * sizeof(ushort)];
+                    _TransformedDepthImageTexture = new Texture2D(_KinectSensor.ColorImageWidth, _KinectSensor.ColorImageHeight, TextureFormat.R16, false);
 
-                _PointCloudRenderer = GetComponent<PointCloudRenderer>();
+                    _PointCloudRenderer = GetComponent<PointCloudRenderer>();
 
-                CameraCalibration deviceDepthCameraCalibration = _KinectSensor.DeviceCalibration.DepthCameraCalibration;
-                CameraCalibration deviceColorCameraCalibration = _KinectSensor.DeviceCalibration.ColorCameraCalibration;
-                
-                K4A.Calibration calibration = new K4A.Calibration();
-                calibration.DepthCameraCalibration = CreateCalibrationCamera(deviceDepthCameraCalibration, _KinectSensor.DepthImageWidth, _KinectSensor.DepthImageHeight);
-                calibration.ColorCameraCalibration = CreateCalibrationCamera(deviceColorCameraCalibration, _KinectSensor.ColorImageWidth, _KinectSensor.ColorImageHeight);
+                    CameraCalibration deviceDepthCameraCalibration = _KinectSensor.DeviceCalibration.DepthCameraCalibration;
+                    CameraCalibration deviceColorCameraCalibration = _KinectSensor.DeviceCalibration.ColorCameraCalibration;
+                    
+                    K4A.Calibration calibration = new K4A.Calibration();
+                    calibration.DepthCameraCalibration = CreateCalibrationCamera(deviceDepthCameraCalibration, _KinectSensor.DepthImageWidth, _KinectSensor.DepthImageHeight);
+                    calibration.ColorCameraCalibration = CreateCalibrationCamera(deviceColorCameraCalibration, _KinectSensor.ColorImageWidth, _KinectSensor.ColorImageHeight);
 
-#if COLOR_TO_DEPTH
-                _PointCloudRenderer.GenerateMesh(calibration, K4A.CalibrationType.Depth);
-#else
-                _PointCloudRenderer.GenerateMesh(calibration, K4A.CalibrationType.Color);
-#endif
+    #if COLOR_TO_DEPTH
+                    _PointCloudRenderer.GenerateMesh(calibration, K4A.CalibrationType.Depth);
+    #else
+                    _PointCloudRenderer.GenerateMesh(calibration, K4A.CalibrationType.Color);
+    #endif
+                }
             }
         }
 
@@ -140,41 +145,44 @@ namespace VolumetricStreamingLite
 
         void Update()
         {
-#if COLOR_TO_DEPTH
-            if (_KinectSensor.TransformedColorImage != null)
+            if (_KinectSensor != null)
             {
-                _TransformedColorImageTexture.LoadRawTextureData(_KinectSensor.TransformedColorImage);
-                _TransformedColorImageTexture.Apply();
-            }
+    #if COLOR_TO_DEPTH
+                if (_KinectSensor.TransformedColorImage != null)
+                {
+                    _TransformedColorImageTexture.LoadRawTextureData(_KinectSensor.TransformedColorImage);
+                    _TransformedColorImageTexture.Apply();
+                }
 
-            if (_KinectSensor.RawDepthImage != null)
-            {
-                short[] depthImage = _KinectSensor.RawDepthImage;
-                Buffer.BlockCopy(depthImage, 0, _DepthRawData, 0, _DepthRawData.Length);
-                _DepthImageTexture.LoadRawTextureData(_DepthRawData);
-                _DepthImageTexture.Apply();
+                if (_KinectSensor.RawDepthImage != null)
+                {
+                    short[] depthImage = _KinectSensor.RawDepthImage;
+                    Buffer.BlockCopy(depthImage, 0, _DepthRawData, 0, _DepthRawData.Length);
+                    _DepthImageTexture.LoadRawTextureData(_DepthRawData);
+                    _DepthImageTexture.Apply();
 
-                _PointCloudRenderer.UpdateColorTexture(_KinectSensor.TransformedColorImage);
-                _PointCloudRenderer.UpdateDepthTexture(_DepthRawData);
-            }
-#else
-            if (_KinectSensor.RawColorImage != null)
-            {
-                _ColorImageTexture.LoadRawTextureData(_KinectSensor.RawColorImage);
-                _ColorImageTexture.Apply();
-            }
+                    _PointCloudRenderer.UpdateColorTexture(_KinectSensor.TransformedColorImage);
+                    _PointCloudRenderer.UpdateDepthTexture(_DepthRawData);
+                }
+    #else
+                if (_KinectSensor.RawColorImage != null)
+                {
+                    _ColorImageTexture.LoadRawTextureData(_KinectSensor.RawColorImage);
+                    _ColorImageTexture.Apply();
+                }
 
-            if (_KinectSensor.TransformedDepthImage != null)
-            {
-                short[] depthImage = _KinectSensor.TransformedDepthImage;
-                Buffer.BlockCopy(depthImage, 0, _TransformedDepthRawData, 0, _TransformedDepthRawData.Length);
-                _TransformedDepthImageTexture.LoadRawTextureData(_TransformedDepthRawData);
-                _TransformedDepthImageTexture.Apply();
+                if (_KinectSensor.TransformedDepthImage != null)
+                {
+                    short[] depthImage = _KinectSensor.TransformedDepthImage;
+                    Buffer.BlockCopy(depthImage, 0, _TransformedDepthRawData, 0, _TransformedDepthRawData.Length);
+                    _TransformedDepthImageTexture.LoadRawTextureData(_TransformedDepthRawData);
+                    _TransformedDepthImageTexture.Apply();
 
-                _PointCloudRenderer.UpdateColorTexture(_KinectSensor.RawColorImage);
-                _PointCloudRenderer.UpdateDepthTexture(_TransformedDepthRawData);
+                    _PointCloudRenderer.UpdateColorTexture(_KinectSensor.RawColorImage);
+                    _PointCloudRenderer.UpdateDepthTexture(_TransformedDepthRawData);
+                }
+    #endif
             }
-#endif
         }
     }
 }
