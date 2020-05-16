@@ -203,7 +203,6 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 858880384}
-  - component: {fileID: 858880386}
   - component: {fileID: 858880385}
   m_Layer: 0
   m_Name: AzureKinectManager
@@ -238,19 +237,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: e7ebbd875c2ef6a42ad4ceb5d17d1a18, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
---- !u!114 &858880386
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 858880383}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 6208219da8405cd47bed485757043348, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  ColorCameraMode: 1
+  ColorImageFormat: 3
+  ColorCameraMode: 2
   DepthCameraMode: 3
 --- !u!1 &1646135968
 GameObject:
@@ -311,6 +299,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   _AzureKinectManager: {fileID: 858880385}
+  _DeviceNumber: 0
 --- !u!23 &1646135972
 MeshRenderer:
   m_ObjectHideFlags: 0
