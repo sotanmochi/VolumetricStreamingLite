@@ -238,7 +238,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   ColorImageFormat: 3
-  ColorCameraMode: 2
+  ColorCameraMode: 1
   DepthCameraMode: 3
 --- !u!1 &1646135968
 GameObject:
