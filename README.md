@@ -49,6 +49,9 @@ The following assets are included in this project.
   Licensed under the Apache License 2.0. Copyright (c) Amazon.com, Inc. or its affiliates.  
   This product includes software developed by Amazon Technologies, Inc (http://www.amazon.com/).
 
+- [Unity3DRuntimeTransformGizmo](https://github.com/HiddenMonk/Unity3DRuntimeTransformGizmo)  
+  Licensed under the MIT License. Copyright (c) 2016 HiddenMonk.
+
 ## License
 このプロジェクトは、サードパーティのアセットを除き、MIT Licenseでライセンスされています。  
 This project is licensed under the MIT License, excluding third party assets.
