@@ -17,14 +17,22 @@ namespace VolumetricStreamingLite.Client
 
         public int ClientId { get { return _StreamingClient.ClientId ;} }
 
-        Texture2D _DepthImageTexture;
-        public Texture2D DepthImageTexture { get { return _DepthImageTexture; } }
-        Texture2D _DecodedDepthImageTexture;
-        public Texture2D DecodedDepthImageTexture { get { return _DecodedDepthImageTexture; } }
-        Texture2D _DiffImageTexture;
-        public Texture2D DiffImageTexture { get { return _DiffImageTexture; } }
         Texture2D _ColorImageTexture;
         public Texture2D ColorImageTexture { get { return _ColorImageTexture; } }
+
+        int _DepthImageWidth;
+        public int DepthImageWidth { get { return _DepthImageWidth; } }
+        int _DepthImageHeight;
+        public int DepthImageHeight { get { return _DepthImageHeight; } }
+        int _DepthImageSize;
+        public int DepthImageSize { get { return _DepthImageSize; } }
+
+        short[] _DepthImageData;
+        public short[] DepthImageData { get { return _DepthImageData; } }
+        short[] _DecodedDepthData;
+        public short[] DecodedDepthData { get { return _DecodedDepthData; } }
+        short[] _DepthDiff;
+        public short[] DepthDiff { get { return _DepthDiff; } }
 
         float _CompressionRatio;
         public float CompressionRatio { get { return _CompressionRatio; } }
@@ -46,11 +54,7 @@ namespace VolumetricStreamingLite.Client
         TemporalRVLEncoder _TrvlEncoder;
         TemporalRVLDecoder _TrvlDecoder;
 
-        int _DepthImageSize;
-        byte[] _DepthRawData;
         byte[] _EncodedDepthData;
-        short[] _DecodedDepthData;
-        short[] _Diff;
         byte[] _EncodedColorImageData;
 
         CompressionMethod _DepthCompressionMethod;
@@ -83,14 +87,14 @@ namespace VolumetricStreamingLite.Client
                     Debug.Log("ColorResolution: " + _KinectSensor.ColorImageWidth + "x" + _KinectSensor.ColorImageHeight);
                     Debug.Log("DepthResolution: " + _KinectSensor.DepthImageWidth + "x" + _KinectSensor.DepthImageHeight);
 
+                    _DepthImageWidth = _KinectSensor.DepthImageWidth;
+                    _DepthImageHeight = _KinectSensor.DepthImageHeight;
                     _DepthImageSize = _KinectSensor.DepthImageWidth * _KinectSensor.DepthImageHeight;
-                    _DepthRawData = new byte[_DepthImageSize * sizeof(short)];
-                    _Diff = new short[_DepthImageSize];
+
+                    _DepthImageData = new short[_DepthImageSize];
+                    _DepthDiff = new short[_DepthImageSize];
                     _EncodedColorImageData = new byte[_DepthImageSize];
 
-                    _DepthImageTexture = new Texture2D(_KinectSensor.DepthImageWidth, _KinectSensor.DepthImageHeight, TextureFormat.R16, false);
-                    _DecodedDepthImageTexture = new Texture2D(_KinectSensor.DepthImageWidth, _KinectSensor.DepthImageHeight, TextureFormat.R16, false);
-                    _DiffImageTexture = new Texture2D(_KinectSensor.DepthImageWidth, _KinectSensor.DepthImageHeight, TextureFormat.R16, false);
                     _ColorImageTexture = new Texture2D(_KinectSensor.DepthImageWidth, _KinectSensor.DepthImageHeight, TextureFormat.BGRA32, false);
 
                     _TrvlEncoder = new TemporalRVLEncoder(_DepthImageSize, 10, 2);
@@ -162,17 +166,14 @@ namespace VolumetricStreamingLite.Client
             if (_KinectSensor.RawDepthImage != null)
             {
                 // Original depth image
-                short[] depthImage = _KinectSensor.RawDepthImage;
-                Buffer.BlockCopy(depthImage, 0, _DepthRawData, 0, _DepthRawData.Length * sizeof(byte));
-                _DepthImageTexture.LoadRawTextureData(_DepthRawData);
-                _DepthImageTexture.Apply();
+                _DepthImageData = _KinectSensor.RawDepthImage;
 
                 _KeyFrame = (_FrameCount++ % _KeyFrameInterval == 0);
 
                 if (_DepthCompressionMethod == CompressionMethod.TemporalRVL)
                 {
                     // Temporal RVL compression
-                    _EncodedDepthData = _TrvlEncoder.Encode(depthImage, _KeyFrame);
+                    _EncodedDepthData = _TrvlEncoder.Encode(_DepthImageData, _KeyFrame);
                     _CompressedDepthDataSize = _EncodedDepthData.Length;                    
 
                     // Temporal RVL decompression
@@ -181,30 +182,20 @@ namespace VolumetricStreamingLite.Client
                 else if (_DepthCompressionMethod == CompressionMethod.RVL)
                 {
                     // RVL compression
-                    _CompressedDepthDataSize = RVL.CompressRVL(depthImage, _EncodedDepthData);                    
+                    _CompressedDepthDataSize = RVL.CompressRVL(_DepthImageData, _EncodedDepthData);                    
 
                     // RVL decompression
                     RVL.DecompressRVL(_EncodedDepthData, _DecodedDepthData);
                 }
 
-                _OriginalDepthDataSize = depthImage.Length * sizeof(ushort);
+                _OriginalDepthDataSize = _DepthImageData.Length * sizeof(ushort);
                 _CompressionRatio = ((float) _OriginalDepthDataSize / _CompressedDepthDataSize);
 
-                // Decoded depth image
-                Buffer.BlockCopy(_DecodedDepthData, 0, _DepthRawData, 0, _DepthRawData.Length * sizeof(byte));
-                _DecodedDepthImageTexture.LoadRawTextureData(_DepthRawData);
-                _DecodedDepthImageTexture.Apply();
-
                 // Difference of original and decoded image
-                for (int i = 0; i < depthImage.Length; i++)
+                for (int i = 0; i < _DepthImageData.Length; i++)
                 {
-                    _Diff[i] = (short)Math.Abs(depthImage[i] - _DecodedDepthData[i]);
+                    _DepthDiff[i] = (short)Math.Abs(_DepthImageData[i] - _DecodedDepthData[i]);
                 }
-
-                // Visualize diff image
-                Buffer.BlockCopy(_Diff, 0, _DepthRawData, 0, _DepthRawData.Length * sizeof(byte));
-                _DiffImageTexture.LoadRawTextureData(_DepthRawData);
-                _DiffImageTexture.Apply();
             }
 
             if (_KinectSensor.TransformedColorImage != null)

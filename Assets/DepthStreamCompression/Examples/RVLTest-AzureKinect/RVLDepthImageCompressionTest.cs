@@ -25,13 +25,16 @@ namespace DepthStreamCompression.Test
         [SerializeField] Text _CompressedDepthImageSize;
         [SerializeField] Text _ProcessingTime;
 
-        Texture2D _DepthImageTexture;
-        Texture2D _DecodedDepthImageTexture;
-        Texture2D _DiffImageTexture;
         Texture2D _ColorImageTexture;
 
+        Material _DepthVisualizerMaterial;
+        Material _DecodedDepthVisualizerMaterial;
+        Material _DepthDiffVisualizerMaterial;
+        ComputeBuffer _DepthBuffer;
+        ComputeBuffer _DecodedDepthBuffer;
+        ComputeBuffer _DepthDiffBuffer;
+
         AzureKinectSensor _KinectSensor;
-        byte[] _DepthRawData;
         byte[] _EncodedDepthData;
         short[] _DecodedDepthData;
         short[] _Diff;
@@ -47,27 +50,33 @@ namespace DepthStreamCompression.Test
                 if (_KinectSensor != null)
                 {
                     int depthImageSize = _KinectSensor.DepthImageWidth * _KinectSensor.DepthImageHeight;
-                    _DepthRawData = new byte[depthImageSize * sizeof(short)];
                     _EncodedDepthData = new byte[depthImageSize];
                     _DecodedDepthData = new short[depthImageSize];
                     _Diff = new short[depthImageSize];
 
-                    _DepthImageTexture = new Texture2D(_KinectSensor.DepthImageWidth, _KinectSensor.DepthImageHeight, TextureFormat.R16, false);
-                    _DecodedDepthImageTexture = new Texture2D(_KinectSensor.DepthImageWidth, _KinectSensor.DepthImageHeight, TextureFormat.R16, false);
-                    _DiffImageTexture = new Texture2D(_KinectSensor.DepthImageWidth, _KinectSensor.DepthImageHeight, TextureFormat.R16, false);
                     _ColorImageTexture = new Texture2D(_KinectSensor.ColorImageWidth, _KinectSensor.ColorImageHeight, TextureFormat.BGRA32, false);
 
+                    _DepthBuffer = new ComputeBuffer(depthImageSize / 2, sizeof(uint));
+                    _DecodedDepthBuffer = new ComputeBuffer(depthImageSize / 2, sizeof(uint));
+                    _DepthDiffBuffer = new ComputeBuffer(depthImageSize / 2, sizeof(uint));
+
+                    _DepthVisualizerMaterial = new Material(_DepthVisualizer);
+                    _DepthVisualizerMaterial.SetInt("_Width", _KinectSensor.DepthImageWidth);
+                    _DepthVisualizerMaterial.SetInt("_Height", _KinectSensor.DepthImageHeight);
                     MeshRenderer depthMeshRenderer = _DepthImageObject.GetComponent<MeshRenderer>();
-                    depthMeshRenderer.sharedMaterial = new Material(_DepthVisualizer);
-                    depthMeshRenderer.sharedMaterial.SetTexture("_DepthTex", _DepthImageTexture);
+                    depthMeshRenderer.sharedMaterial = _DepthVisualizerMaterial;
 
+                    _DecodedDepthVisualizerMaterial = new Material(_DepthVisualizer);
+                    _DecodedDepthVisualizerMaterial.SetInt("_Width", _KinectSensor.DepthImageWidth);
+                    _DecodedDepthVisualizerMaterial.SetInt("_Height", _KinectSensor.DepthImageHeight);
                     MeshRenderer decodedDepthMeshRenderer = _DecodedDepthImageObject.GetComponent<MeshRenderer>();
-                    decodedDepthMeshRenderer.sharedMaterial = new Material(_DepthVisualizer);
-                    decodedDepthMeshRenderer.sharedMaterial.SetTexture("_DepthTex", _DecodedDepthImageTexture);
+                    decodedDepthMeshRenderer.sharedMaterial = _DecodedDepthVisualizerMaterial;
 
+                    _DepthDiffVisualizerMaterial = new Material(_DepthVisualizer);
+                    _DepthDiffVisualizerMaterial.SetInt("_Width", _KinectSensor.DepthImageWidth);
+                    _DepthDiffVisualizerMaterial.SetInt("_Height", _KinectSensor.DepthImageHeight);
                     MeshRenderer diffMeshRenderer = _DiffImageObject.GetComponent<MeshRenderer>();
-                    diffMeshRenderer.sharedMaterial = new Material(_DiffVisualizer);
-                    diffMeshRenderer.sharedMaterial.SetTexture("_DepthTex", _DiffImageTexture);
+                    diffMeshRenderer.sharedMaterial = _DepthDiffVisualizerMaterial;
 
                     MeshRenderer colorMeshRenderer = _ColorImageObject.GetComponent<MeshRenderer>();
                     colorMeshRenderer.sharedMaterial = new Material(_UnlitTextureMaterial);
@@ -87,9 +96,8 @@ namespace DepthStreamCompression.Test
                 {
                     // Visualize original depth image
                     short[] depthImage = _KinectSensor.RawDepthImage;
-                    Buffer.BlockCopy(depthImage, 0, _DepthRawData, 0, _DepthRawData.Length * sizeof(byte));
-                    _DepthImageTexture.LoadRawTextureData(_DepthRawData);
-                    _DepthImageTexture.Apply();
+                    _DepthBuffer.SetData(depthImage);
+                    _DepthVisualizerMaterial.SetBuffer("_DepthBuffer", _DepthBuffer);
 
                     _Stopwatch.Reset();
                     _Stopwatch.Start();
@@ -110,9 +118,8 @@ namespace DepthStreamCompression.Test
                     long decodingTimeMillseconds = _Stopwatch.ElapsedMilliseconds;
 
                     // Visualize decoded depth image
-                    Buffer.BlockCopy(_DecodedDepthData, 0, _DepthRawData, 0, _DepthRawData.Length * sizeof(byte));
-                    _DecodedDepthImageTexture.LoadRawTextureData(_DepthRawData);
-                    _DecodedDepthImageTexture.Apply();
+                    _DecodedDepthBuffer.SetData(_DecodedDepthData);
+                    _DecodedDepthVisualizerMaterial.SetBuffer("_DepthBuffer", _DecodedDepthBuffer);
 
                     // Difference of depth images
                     for (int i = 0; i < depthImage.Length; i++)
@@ -121,9 +128,8 @@ namespace DepthStreamCompression.Test
                     }
 
                     // Visualize diff image
-                    Buffer.BlockCopy(_Diff, 0, _DepthRawData, 0, _DepthRawData.Length * sizeof(byte));
-                    _DiffImageTexture.LoadRawTextureData(_DepthRawData);
-                    _DiffImageTexture.Apply();
+                    _DepthDiffBuffer.SetData(_Diff);
+                    _DepthDiffVisualizerMaterial.SetBuffer("_DepthBuffer", _DepthDiffBuffer);
 
                     // Display info
                     int originalDepthDataSize = depthImage.Length * sizeof(short);
@@ -131,7 +137,7 @@ namespace DepthStreamCompression.Test
                     float compressionRatio = originalDepthDataSize / compressedDepthDataSize;
 
                     _DepthImageSize.text = string.Format("Size: {2:#,0} [bytes]  Resolution: {0}x{1}",
-                                                        _DepthImageTexture.width, _DepthImageTexture.height, originalDepthDataSize);
+                                                        _KinectSensor.DepthImageWidth, _KinectSensor.DepthImageHeight, originalDepthDataSize);
                     _CompressedDepthImageSize.text = string.Format("Size: {0:#,0} [bytes]  Data compression ratio: {1:F1}",
                                                                 compressedDepthDataSize, compressionRatio);
                     _ProcessingTime.text = string.Format("Processing time:\n Encode: {0} [ms]\n Decode: {1} [ms]",

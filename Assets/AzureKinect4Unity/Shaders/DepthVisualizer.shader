@@ -5,8 +5,6 @@ Shader "Custom/DepthVisualizer"
 {
     Properties
     {
-        _MainTex ("Color Texture", 2D) = "white" {}
-        _DepthTex ("Depth Texture", 2D) = "white" {}
         _DepthScale ("Depth Scale", Float) = 1.0
         _MaxInMeters ("Maximum Distance", Float) = 4.2
         _MinInMeters ("Minimum Distance", Float) = 0.2
@@ -15,7 +13,6 @@ Shader "Custom/DepthVisualizer"
     SubShader
     {
         Tags { "RenderType"="Opaque" }
-        LOD 100
 
         Pass
         {
@@ -38,26 +35,36 @@ Shader "Custom/DepthVisualizer"
                 float4 vertex : SV_POSITION;
             };
 
-            sampler2D _MainTex;
-            float4 _MainTex_ST;
+            Buffer<uint> _DepthBuffer;
+            int _Width;
+            int _Height;
 
-            sampler2D _DepthTex;
             float _DepthScale;
             float _MaxInMeters;
             float _MinInMeters;
+
+            uint uint_to_ushort(uint raw, bool high)
+            {
+                uint4 c4 = uint4(raw, raw >> 8, raw >> 16, raw >> 24) & 0xff;
+                uint2 c2 = high ? c4.zw : c4.xy;
+                return c2.x + (c2.y << 8);
+            }
 
             v2f vert (appdata v)
             {
                 v2f o;
                 o.vertex = UnityObjectToClipPos(v.vertex);
-                o.uv = TRANSFORM_TEX(v.uv, _MainTex);
+                o.uv = v.uv;
                 return o;
             }
 
             fixed4 frag (v2f i) : SV_Target
             {
-                float4 depthTex = tex2D(_DepthTex, i.uv);
-                float depth = depthTex.r * 65535.0 / 1000.0 * _DepthScale;
+                // Buffer index
+                uint idx = (uint)(i.uv.x * _Width) + (uint)((1 - i.uv.y) * _Height) * _Width;
+
+                // Depth sample (int16 -> float)
+                float depth = uint_to_ushort(_DepthBuffer[idx >> 1], idx & 1) / 1000.0 * _DepthScale;
 
                 float h = 300.0/360.0 * (depth - _MinInMeters) / ((_MaxInMeters - _MinInMeters) * _DepthScale);
                 float s = 1.0;

@@ -32,10 +32,14 @@ namespace VolumetricStreamingLite.Client
         [SerializeField] Button _StartStreaming;
         [SerializeField] Button _StopStreaming;
 
-        Texture2D _DepthImageTexture;
-        Texture2D _DecodedDepthImageTexture;
-        Texture2D _DiffImageTexture;
         Texture2D _ColorImageTexture;
+
+        Material _DepthVisualizerMaterial;
+        Material _DecodedDepthVisualizerMaterial;
+        Material _DepthDiffVisualizerMaterial;
+        ComputeBuffer _DepthBuffer;
+        ComputeBuffer _DecodedDepthBuffer;
+        ComputeBuffer _DepthDiffBuffer;
 
         void Start()
         {
@@ -46,22 +50,29 @@ namespace VolumetricStreamingLite.Client
             _Connect.onClick.AddListener(OnClickConnect);
             _Disconnect.onClick.AddListener(OnClickDisconnect);
 
-            _DepthImageTexture = _StreamingService.DepthImageTexture;
-            _DecodedDepthImageTexture = _StreamingService.DecodedDepthImageTexture;
-            _DiffImageTexture = _StreamingService.DiffImageTexture;
             _ColorImageTexture = _StreamingService.ColorImageTexture;
 
+            _DepthBuffer = new ComputeBuffer(_StreamingService.DepthImageSize / 2, sizeof(uint));
+            _DecodedDepthBuffer = new ComputeBuffer(_StreamingService.DepthImageSize / 2, sizeof(uint));
+            _DepthDiffBuffer = new ComputeBuffer(_StreamingService.DepthImageSize / 2, sizeof(uint));
+
+            _DepthVisualizerMaterial = new Material(_DepthVisualizer);
+            _DepthVisualizerMaterial.SetInt("_Width", _StreamingService.DepthImageWidth);
+            _DepthVisualizerMaterial.SetInt("_Height", _StreamingService.DepthImageHeight);
             MeshRenderer depthMeshRenderer = _DepthImageObject.GetComponent<MeshRenderer>();
-            depthMeshRenderer.sharedMaterial = new Material(_DepthVisualizer);
-            depthMeshRenderer.sharedMaterial.SetTexture("_DepthTex", _DepthImageTexture);
+            depthMeshRenderer.sharedMaterial = _DepthVisualizerMaterial;
 
+            _DecodedDepthVisualizerMaterial = new Material(_DepthVisualizer);
+            _DecodedDepthVisualizerMaterial.SetInt("_Width", _StreamingService.DepthImageWidth);
+            _DecodedDepthVisualizerMaterial.SetInt("_Height", _StreamingService.DepthImageHeight);
             MeshRenderer decodedDepthMeshRenderer = _DecodedDepthImageObject.GetComponent<MeshRenderer>();
-            decodedDepthMeshRenderer.sharedMaterial = new Material(_DepthVisualizer);
-            decodedDepthMeshRenderer.sharedMaterial.SetTexture("_DepthTex", _DecodedDepthImageTexture);
+            decodedDepthMeshRenderer.sharedMaterial = _DecodedDepthVisualizerMaterial;
 
+            _DepthDiffVisualizerMaterial = new Material(_DiffVisualizer);
+            _DepthDiffVisualizerMaterial.SetInt("_Width", _StreamingService.DepthImageWidth);
+            _DepthDiffVisualizerMaterial.SetInt("_Height", _StreamingService.DepthImageHeight);
             MeshRenderer diffMeshRenderer = _DiffImageObject.GetComponent<MeshRenderer>();
-            diffMeshRenderer.sharedMaterial = new Material(_DiffVisualizer);
-            diffMeshRenderer.sharedMaterial.SetTexture("_DepthTex", _DiffImageTexture);
+            diffMeshRenderer.sharedMaterial = _DepthDiffVisualizerMaterial;
 
             MeshRenderer colorMeshRenderer = _ColorImageObject.GetComponent<MeshRenderer>();
             colorMeshRenderer.sharedMaterial = new Material(_UnlitTextureMaterial);
@@ -73,7 +84,7 @@ namespace VolumetricStreamingLite.Client
             _ClientIdText.text = "Client ID : " + _StreamingService.ClientId;
 
             _DepthImageSize.text = string.Format("Size: {2:#,0} [bytes]  Resolution: {0}x{1}",
-                                                 _DepthImageTexture.width, _DepthImageTexture.height,
+                                                 _StreamingService.DepthImageWidth, _StreamingService.DepthImageHeight,
                                                  _StreamingService.OriginalDepthDataSize);
 
             _CompressedDepthImageSize.text = string.Format("Size: {0:#,0} [bytes]  Data compression ratio: {1:F1}",
@@ -81,6 +92,18 @@ namespace VolumetricStreamingLite.Client
                                                            _StreamingService.CompressionRatio);
 
             _ColorImageSize.text = string.Format("Size of jpeg: {0:#,0} [bytes]", _StreamingService.CompressedColorDataSize);
+
+            _DepthBuffer.SetData(_StreamingService.DepthImageData);
+            _DepthVisualizerMaterial.SetBuffer("_DepthBuffer", _DepthBuffer);
+
+            _DepthDiffBuffer.SetData(_StreamingService.DepthDiff);
+            _DepthDiffVisualizerMaterial.SetBuffer("_DepthBuffer", _DepthDiffBuffer);
+
+            if (_StreamingService.DecodedDepthData != null)
+            {
+                _DecodedDepthBuffer.SetData(_StreamingService.DecodedDepthData);
+                _DecodedDepthVisualizerMaterial.SetBuffer("_DepthBuffer", _DecodedDepthBuffer);
+            }
         }
 
         void OnClickConnect()
