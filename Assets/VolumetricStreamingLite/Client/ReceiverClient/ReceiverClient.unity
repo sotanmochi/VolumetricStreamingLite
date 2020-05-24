@@ -718,6 +718,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 1c17c122b318a2f469c06386c290cb78, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  _DepthPointCloud: {fileID: 4800000, guid: 530847223b838994ebccdc91bb181794, type: 3}
 --- !u!23 &406995544
 MeshRenderer:
   m_ObjectHideFlags: 0

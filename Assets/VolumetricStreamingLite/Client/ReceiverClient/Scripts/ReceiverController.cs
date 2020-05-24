@@ -51,15 +51,13 @@ namespace VolumetricStreamingLite.Client
         {
             _ClientIdText.text = "Client ID : " + _ReceiverService.ClientId;
 
-            _DepthImageTexture = _ReceiverService.DepthImageTexture;
             _ColorImageTexture = _ReceiverService.ColorImageTexture;
 
-            _DepthMeshRenderer.sharedMaterial.SetTexture("_DepthTex", _DepthImageTexture);
             _ColorMeshRenderer.sharedMaterial.SetTexture("_MainTex", _ColorImageTexture);
 
-            if (_ReceiverService.DepthImageRawData != null)
+            if (_ReceiverService.DepthImageData != null)
             {
-                _PointCloudRenderer.UpdateDepthTexture(_ReceiverService.DepthImageRawData);
+                _PointCloudRenderer.UpdateDepthBuffer(_ReceiverService.DepthImageData);
             }
             if (_ReceiverService.ColorImageData != null)
             {

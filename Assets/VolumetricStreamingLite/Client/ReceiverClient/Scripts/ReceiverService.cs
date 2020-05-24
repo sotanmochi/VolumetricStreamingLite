@@ -14,16 +14,13 @@ namespace VolumetricStreamingLite.Client
         public int ClientId { get { return _ReceiverClient.ClientId ;} }
         public OnReceivedCalibrationDelegate OnReceivedCalibration;
 
-        Texture2D _DepthImageTexture;
-        public Texture2D DepthImageTexture { get { return _DepthImageTexture; } }
         Texture2D _ColorImageTexture;
         public Texture2D ColorImageTexture { get { return _ColorImageTexture; } }
 
         TemporalRVLDecoder _TrvlDecoder;
         int _DepthImageSize = 0;
         short[] _DecodedDepthData;
-        byte[] _DepthImageRawData;
-        public byte[] DepthImageRawData { get { return _DepthImageRawData; } }
+        public short[] DepthImageData { get { return _DecodedDepthData; } }
         byte[] _ColorImageData;
         public byte[] ColorImageData { get { return _ColorImageData; } }
 
@@ -77,16 +74,6 @@ namespace VolumetricStreamingLite.Client
             {
                 _DepthImageSize = _ReceiverClient.DepthImageSize;
                 _TrvlDecoder = new TemporalRVLDecoder(_DepthImageSize);
-                _DepthImageRawData = new byte[_DepthImageSize * sizeof(short)];
-            }
-
-            if (_DepthImageTexture == null || 
-                _DepthImageTexture.width != _ReceiverClient.DepthWidth ||
-                _DepthImageTexture.height != _ReceiverClient.DepthHeight)
-            {
-                int width = _ReceiverClient.DepthWidth;
-                int height = _ReceiverClient.DepthHeight;
-                _DepthImageTexture = new Texture2D(width, height, TextureFormat.R16, false);
             }
 
             if (_ColorImageTexture == null || 
@@ -114,10 +101,6 @@ namespace VolumetricStreamingLite.Client
                     // RVL decompression
                     RVL.DecompressRVL(encodedDepthData, _DecodedDepthData);
                 }
-
-                Buffer.BlockCopy(_DecodedDepthData, 0, _DepthImageRawData, 0, _DepthImageRawData.Length * sizeof(byte));
-                _DepthImageTexture.LoadRawTextureData(_DepthImageRawData);
-                _DepthImageTexture.Apply();
 
                 _ColorImageData = frame.ColorImageData;
                 _ColorImageTexture.LoadImage(_ColorImageData);
