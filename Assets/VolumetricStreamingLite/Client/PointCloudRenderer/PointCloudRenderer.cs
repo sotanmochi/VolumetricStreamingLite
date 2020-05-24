@@ -9,9 +9,12 @@ namespace VolumetricStreamingLite
     [RequireComponent(typeof(MeshFilter), typeof(MeshRenderer))]
     public class PointCloudRenderer : MonoBehaviour
     {
+        [SerializeField] Shader _DepthPointCloud;
         private Mesh _Mesh;
         private Texture2D _ColorTexture;
         private Texture2D _DepthTexture;
+        private ComputeBuffer _DepthBuffer;
+        private Material _DepthPointCloudMaterial;
 
         public void UpdateVertices(Vector3[] vertices)
         {
@@ -34,6 +37,12 @@ namespace VolumetricStreamingLite
         {
             _DepthTexture.LoadRawTextureData(depthImageRawData);
             _DepthTexture.Apply();
+        }
+
+        public void UpdateDepthBuffer(short[] depthImageData)
+        {
+            _DepthBuffer.SetData(depthImageData);
+            _DepthPointCloudMaterial.SetBuffer("_DepthBuffer", _DepthBuffer);
         }
 
         public void GenerateMesh(K4A.Calibration calibration, K4A.CalibrationType calibrationType)
@@ -141,6 +150,9 @@ namespace VolumetricStreamingLite
 
             GetComponent<MeshFilter>().mesh = _Mesh;
 
+            _DepthPointCloudMaterial = new Material(_DepthPointCloud);
+            GetComponent<MeshRenderer>().sharedMaterial = _DepthPointCloudMaterial;
+
             InitializeColorTexture(width, height);
             InitializeDepthTexture(width, height);
         }
@@ -152,8 +164,8 @@ namespace VolumetricStreamingLite
                 wrapMode = TextureWrapMode.Clamp,
                 filterMode = FilterMode.Point,
             };
-            MeshRenderer meshRenderer = GetComponent<MeshRenderer>();
-            meshRenderer.sharedMaterial.SetTexture("_MainTex", _ColorTexture);
+
+            _DepthPointCloudMaterial.SetTexture("_MainTex", _ColorTexture);
         }
 
         private void InitializeDepthTexture(int width, int height)
@@ -163,8 +175,13 @@ namespace VolumetricStreamingLite
                 wrapMode = TextureWrapMode.Clamp,
                 filterMode = FilterMode.Point,
             };
-            MeshRenderer meshRenderer = GetComponent<MeshRenderer>();
-            meshRenderer.sharedMaterial.SetTexture("_DepthTex", _DepthTexture);
+
+            int depthImageSize = width * height;
+            _DepthBuffer = new ComputeBuffer(depthImageSize / 2, sizeof(uint));
+
+            _DepthPointCloudMaterial.SetInt("_Width", width);
+            _DepthPointCloudMaterial.SetInt("_Height", height);
+            _DepthPointCloudMaterial.SetBuffer("_DepthBuffer", _DepthBuffer);
         }
     }
 }

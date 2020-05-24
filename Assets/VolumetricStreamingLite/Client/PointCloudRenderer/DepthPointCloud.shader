@@ -6,7 +6,6 @@ Shader "Custom/DepthPointCloud"
     Properties
     {
         _MainTex ("Color Texture", 2D) = "white" {}
-        _DepthTex ("Depth Texture", 2D) = "white" {}
         _DepthScale ("Depth Scale", Float) = 1.0
     }
 
@@ -39,17 +38,31 @@ Shader "Custom/DepthPointCloud"
             sampler2D _MainTex;
             float4 _MainTex_ST;
 
-            sampler2D _DepthTex;
+            Buffer<uint> _DepthBuffer;
+            int _Width;
+            int _Height;
             float _DepthScale;
+
+            uint uint_to_ushort(uint raw, bool high)
+            {
+                uint4 c4 = uint4(raw, raw >> 8, raw >> 16, raw >> 24) & 0xff;
+                uint2 c2 = high ? c4.zw : c4.xy;
+                return c2.x + (c2.y << 8);
+            }
 
             v2f vert (appdata v)
             {
-                // Original depth data format is 16-bit unsigned integer
-                float4 depth = tex2Dlod(_DepthTex, float4(v.uv, 0, 0)).r * 65535.0 / 1000.0;
+                float2 uv = float2(v.uv.x, 1 - v.uv.y);
+
+                // Buffer index
+                uint idx = (uint)(uv.x * _Width) + (uint)(uv.y * _Height) * _Width;
+
+                // Depth sample (int16 -> float)
+                float depth = uint_to_ushort(_DepthBuffer[idx >> 1], idx & 1) / 1000.0 * _DepthScale;
 
                 v2f o;
                 o.vertex = UnityObjectToClipPos(v.vertex * depth);
-                o.uv = TRANSFORM_TEX(v.uv, _MainTex);
+                o.uv = TRANSFORM_TEX(uv, _MainTex);
                 return o;
             }
 
