@@ -1,20 +1,16 @@
 ﻿// Copyright (c) 2020 Soichiro Sugimoto.
 // Licensed under the MIT License. See LICENSE in the project root for license information.
 
+using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.UI;
 
 namespace VolumetricStreamingLite.Client
 {
-    public class ReceiverController : MonoBehaviour
+    public class MultipleKinectReceiverController : MonoBehaviour
     {
-        [SerializeField] ReceiverService _ReceiverService;
-        [SerializeField] PointCloudRenderer _PointCloudRenderer;
-
-        [SerializeField] Shader _DepthVisualizer;
-        [SerializeField] Material _UnlitTextureMaterial;
-        [SerializeField] GameObject _DepthImageObject;
-        [SerializeField] GameObject _ColorImageObject;
+        [SerializeField] MultipleKinectReceiverService _ReceiverService;
+        [SerializeField] GameObject _PointCloudRendererPrefab;
 
         [SerializeField] Text _ClientIdText;
         [SerializeField] InputField _ServerAddress;
@@ -25,48 +21,52 @@ namespace VolumetricStreamingLite.Client
         [SerializeField] Button _RegisterReceiver;
         [SerializeField] Button _UnregisterReceiver;
 
+        public List<PointCloudRenderer> _PointCloudRendererList = new List<PointCloudRenderer>();
+
         int _PreviousStreamingClientId;
-        Texture2D _DepthImageTexture;
-        MeshRenderer _DepthMeshRenderer;
-        Texture2D _ColorImageTexture;
-        MeshRenderer _ColorMeshRenderer;
 
         void Start()
         {
-            _ReceiverService.OnReceivedCalibration += OnReceivedCalibration;
+            _ReceiverService.OnReceivedCalibrationDelegate += OnReceivedCalibration;
 
             _Connect.onClick.AddListener(OnClickConnect);
             _Disconnect.onClick.AddListener(OnClickDisconnect);
             _RegisterReceiver.onClick.AddListener(OnClickRegisterReceiver);
             _UnregisterReceiver.onClick.AddListener(OnClickUnregisterReceiver);
-
-            _DepthMeshRenderer = _DepthImageObject.GetComponent<MeshRenderer>();
-            _DepthMeshRenderer.sharedMaterial = new Material(_DepthVisualizer);
-
-            _ColorMeshRenderer = _ColorImageObject.GetComponent<MeshRenderer>();
-            _ColorMeshRenderer.sharedMaterial = new Material(_UnlitTextureMaterial);
         }
 
         void Update()
         {
             _ClientIdText.text = "Client ID : " + _ReceiverService.ClientId;
 
-            _ColorImageTexture = _ReceiverService.ColorImageTexture;
-
-            _ColorMeshRenderer.sharedMaterial.SetTexture("_MainTex", _ColorImageTexture);
-
-            if (_ReceiverService.DepthImageData != null)
+            for (int i = 0; i < _PointCloudRendererList.Count; i++)
             {
-                _PointCloudRenderer.UpdateDepthBuffer(_ReceiverService.DepthImageData);
-            }
-            if (_ReceiverService.ColorImageData != null)
-            {
-                _PointCloudRenderer.UpdateColorTextureImageByteArray(_ReceiverService.ColorImageData);
+                var pointCloudRenderer = _PointCloudRendererList[i];
+                if (_ReceiverService.DepthImageData != null)
+                {
+                    pointCloudRenderer.UpdateDepthBuffer(_ReceiverService.DepthImageData[i]);
+                }
+                if (_ReceiverService.ColorImageData != null)
+                {
+                    pointCloudRenderer.UpdateColorTextureImageByteArray(_ReceiverService.ColorImageData[i]);
+                }
             }
         }
 
         void OnReceivedCalibration(int deviceCount, K4A.CalibrationType calibrationType, K4A.Calibration calibration)
         {
+            Debug.Log("DeviceCount: " + deviceCount);
+            for (int i = 0; i < deviceCount; i++)
+            {
+                var gameObject = GameObject.Instantiate(_PointCloudRendererPrefab);
+                var pointCloudRenderer = gameObject.GetComponent<PointCloudRenderer>();
+                if (pointCloudRenderer != null)
+                {
+                    pointCloudRenderer.GenerateMesh(calibration, calibrationType);
+                    _PointCloudRendererList.Add(pointCloudRenderer);
+                }
+            }
+
             Debug.Log("CalibrationType: " + calibrationType);
             
             K4A.CalibrationCamera depthCalibrationCamera = calibration.DepthCameraCalibration;
@@ -74,8 +74,6 @@ namespace VolumetricStreamingLite.Client
 
             Debug.Log("Calibration.DepthImage: " + depthCalibrationCamera.resolutionWidth + "x" + depthCalibrationCamera.resolutionHeight);
             Debug.Log("Calibration.ColorImage: " + colorCalibrationCamera.resolutionWidth + "x" + colorCalibrationCamera.resolutionHeight);
-            
-            _PointCloudRenderer.GenerateMesh(calibration, calibrationType);
         }
 
         void OnClickConnect()

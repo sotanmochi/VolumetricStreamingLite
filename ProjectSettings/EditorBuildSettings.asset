@@ -11,10 +11,19 @@ EditorBuildSettings:
   - enabled: 0
     path: Assets/VolumetricStreamingLite/Client/ReceiverClient/ReceiverClient.unity
     guid: aa5222bdf83a335418bd70b43765112a
+  - enabled: 1
+    path: Assets/VolumetricStreamingLite/Client/StreamingClient/MultipleKinectSteamingClient.unity
+    guid: 16bcc616c0987314e8d9dc1cfd1fbc75
+  - enabled: 0
+    path: Assets/VolumetricStreamingLite/Client/ReceiverClient/MultipleKinectReceiverClient.unity
+    guid: eea99fa0caf9721489e409fdc215f380
   - enabled: 0
     path: Assets/VolumetricStreamingLite/Server/StreamingServer.unity
     guid: 4f2300ff554866243822f639839f5d9d
   - enabled: 0
     path: Assets/VolumetricStreamingLite/Server/StreamingServer_GameLift.unity
     guid: a519c0830d9046740b9eb90f296016ca
+  - enabled: 0
+    path: Assets/VolumetricStreamingLite/Client/PointCloudRenderer/Example/PointCloudRendererTest.unity
+    guid: cac578c8ca14b9d499789a514b83e38e
   m_configObjects: {}

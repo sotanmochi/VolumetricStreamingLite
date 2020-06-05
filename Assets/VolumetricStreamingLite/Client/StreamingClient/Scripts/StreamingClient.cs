@@ -48,7 +48,7 @@ namespace VolumetricStreamingLite.Client
             }
         }
 
-        public void SendCalibration(K4A.CalibrationType calibrationType, K4A.Calibration calibration)
+        public void SendCalibration(int deviceCount, K4A.CalibrationType calibrationType, K4A.Calibration calibration)
         {
             BinaryFormatter binaryFormatter = new BinaryFormatter();
             MemoryStream memoryStream = new MemoryStream();
@@ -58,6 +58,7 @@ namespace VolumetricStreamingLite.Client
 
             _dataWriter.Reset();
             _dataWriter.Put((int)NetworkDataType.SendCalibration);
+            _dataWriter.Put(deviceCount);
             _dataWriter.Put((int)calibrationType);
             _dataWriter.Put(serializedCalibration.Length);
             _dataWriter.Put(serializedCalibration);
@@ -65,11 +66,12 @@ namespace VolumetricStreamingLite.Client
             _liteNetLibClient.SendData(_dataWriter, DeliveryMethod.ReliableOrdered);
         }
 
-        public void SendDepthData(CompressionMethod compressionMethod, byte[] encodedDepthData, 
+        public void SendDepthData(int deviceNumber, CompressionMethod compressionMethod, byte[] encodedDepthData, 
                                   int depthWidth, int depthHeight, bool isKeyFrame, int frameCount = -1)
         {
             _dataWriter.Reset();
             _dataWriter.Put((int)NetworkDataType.SendDepthData);
+            _dataWriter.Put(deviceNumber);
             _dataWriter.Put(frameCount);
             _dataWriter.Put(isKeyFrame);
             _dataWriter.Put(depthWidth);
@@ -84,8 +86,15 @@ namespace VolumetricStreamingLite.Client
         public void SendDepthAndColorData(CompressionMethod compressionMethod, byte[] encodedDepthData, int depthWidth, int depthHeight, bool isKeyFrame,
                                           byte[] colorImageData, int colorWidth, int colorHeight, int frameCount = -1)
         {
+            SendDepthAndColorData(0, compressionMethod, encodedDepthData, depthWidth, depthHeight, isKeyFrame, colorImageData, colorWidth, colorHeight, frameCount);
+        }
+
+        public void SendDepthAndColorData(int deviceNumber, CompressionMethod compressionMethod, byte[] encodedDepthData, int depthWidth, int depthHeight, 
+                                          bool isKeyFrame, byte[] colorImageData, int colorWidth, int colorHeight, int frameCount = -1)
+        {
             _dataWriter.Reset();
             _dataWriter.Put((int)NetworkDataType.SendDepthAndColorData);
+            _dataWriter.Put(deviceNumber);
             _dataWriter.Put(frameCount);
             _dataWriter.Put(isKeyFrame);
             _dataWriter.Put(depthWidth);

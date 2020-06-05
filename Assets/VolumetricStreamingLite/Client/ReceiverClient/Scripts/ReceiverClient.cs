@@ -11,7 +11,7 @@ using LiteNetLibExtension;
 
 namespace VolumetricStreamingLite.Client
 {
-    public delegate void OnReceivedCalibrationDelegate(K4A.CalibrationType calibrationType, K4A.Calibration calibration);
+    public delegate void OnReceivedCalibrationDelegate(int deviceCount, K4A.CalibrationType calibrationType, K4A.Calibration calibration);
 
     public class Frame
     {
@@ -38,6 +38,8 @@ namespace VolumetricStreamingLite.Client
         public int ClientId { get; private set; }
         public OnReceivedCalibrationDelegate OnReceivedCalibration;
 
+        public int DeviceCount { get; private set; }
+
         public int DepthWidth { get; private set; }
         public int DepthHeight { get; private set; }
         public int DepthImageSize { get; private set; }
@@ -45,7 +47,7 @@ namespace VolumetricStreamingLite.Client
         public int ColorHeight { get; private set; }
 
         NetDataWriter _dataWriter;
-        Queue<Frame> _frameQueue;
+        Dictionary<int, Queue<Frame>> _frameQueues = new Dictionary<int, Queue<Frame>>();
         int _frameCount = -1;
 
         void Awake()
@@ -53,7 +55,6 @@ namespace VolumetricStreamingLite.Client
             ClientId = -1;
             _liteNetLibClient.OnNetworkReceived += OnNetworkReceived;
             _dataWriter = new NetDataWriter();
-            _frameQueue = new Queue<Frame>();
         }
 
         public bool StartClient(string address, int port)
@@ -95,6 +96,15 @@ namespace VolumetricStreamingLite.Client
         void OnReceivedCalibrationHandler(NetPeer peer, NetPacketReader reader)
         {
             Debug.Log("OnReceivedCalibration");
+            DeviceCount = reader.GetInt();
+
+            Debug.Log("DeviceCount: " + DeviceCount);
+
+            _frameQueues.Clear();
+            for (int i = 0; i < DeviceCount; i++)
+            {
+                _frameQueues.Add(i, new Queue<Frame>());
+            }
 
             K4A.CalibrationType calibrationType = (K4A.CalibrationType)reader.GetInt();
             Debug.Log("OnReceivedCalibrationType: " + calibrationType);
@@ -108,11 +118,12 @@ namespace VolumetricStreamingLite.Client
 
             K4A.Calibration calibration = (K4A.Calibration)binaryFormatter.Deserialize(memoryStream);
 
-            OnReceivedCalibration?.Invoke(calibrationType, calibration);
+            OnReceivedCalibration?.Invoke(DeviceCount, calibrationType, calibration);
         }
 
         void OnReceivedDepthData(NetPeer peer, NetPacketReader reader)
         {
+            int deviceNumber = reader.GetInt();
             int frameCount = reader.GetInt();
             bool isKeyFrame = reader.GetBool();
             int depthWidth = reader.GetInt();
@@ -123,11 +134,12 @@ namespace VolumetricStreamingLite.Client
             byte[] encodedDepthData = new byte[encodedDepthDataLength];
             reader.GetBytes(encodedDepthData, encodedDepthDataLength);
 
-            OnReceivedDepthData(frameCount, isKeyFrame, depthWidth, depthHeight, compressionMethod, encodedDepthData);
+            OnReceivedDepthData(deviceNumber, frameCount, isKeyFrame, depthWidth, depthHeight, compressionMethod, encodedDepthData);
         }
 
         void OnReceivedDepthAndColorData(NetPeer peer, NetPacketReader reader)
         {
+            int deviceNumber = reader.GetInt();
             int frameCount = reader.GetInt();
             bool isKeyFrame = reader.GetBool();
             int depthWidth = reader.GetInt();
@@ -145,21 +157,34 @@ namespace VolumetricStreamingLite.Client
             byte[] colorImageData = new byte[colorImageDataLength];
             reader.GetBytes(colorImageData, colorImageDataLength);
 
-            OnReceivedDepthAndColorData(frameCount, isKeyFrame, depthWidth, depthHeight, compressionMethod, encodedDepthData,
+            OnReceivedDepthAndColorData(deviceNumber, frameCount, isKeyFrame, depthWidth, depthHeight, compressionMethod, encodedDepthData,
                                         colorWidth, colorHeight, colorImageData);
         }
 
-        public void OnReceivedDepthData(int frameCount, bool isKeyFrame, int depthWidth, int depthHeight, 
+        public void OnReceivedDepthData(int deviceNumber, int frameCount, bool isKeyFrame, int depthWidth, int depthHeight, 
                                         CompressionMethod compressionMethod, byte[] encodedDepthData)
         {
             DepthWidth = depthWidth;
             DepthHeight = depthHeight;
             DepthImageSize = depthWidth * DepthHeight;
 
-            _frameQueue.Enqueue(new Frame(frameCount, isKeyFrame, compressionMethod, encodedDepthData, null));
+            if (_frameQueues.ContainsKey(deviceNumber))
+            {
+                var frameQueue = _frameQueues[deviceNumber];
+
+                if (frameCount >= _frameCount)
+                {
+                    _frameCount = frameCount;
+                    frameQueue.Enqueue(new Frame(frameCount, isKeyFrame, compressionMethod, encodedDepthData, new byte[0]));
+                }
+                else
+                {
+                    Debug.Log("Frame: " + frameCount + "has been delayed.");
+                }
+            }
         }
 
-        public void OnReceivedDepthAndColorData(int frameCount, bool isKeyFrame, int depthWidth, int depthHeight,
+        public void OnReceivedDepthAndColorData(int deviceNumber, int frameCount, bool isKeyFrame, int depthWidth, int depthHeight,
                                                 CompressionMethod compressionMethod, byte[] encodedDepthData, 
                                                 int colorWidth, int colorHeight, byte[] colorImageData)
         {
@@ -169,27 +194,35 @@ namespace VolumetricStreamingLite.Client
             ColorWidth = colorWidth;
             ColorHeight = colorHeight;
 
-            if (frameCount > _frameCount)
+            if (_frameQueues.ContainsKey(deviceNumber))
             {
-                _frameCount = frameCount;
-                _frameQueue.Enqueue(new Frame(frameCount, isKeyFrame, compressionMethod, encodedDepthData, colorImageData));
-            }
-            else
-            {
-                Debug.Log("Frame: " + frameCount + "has been delayed.");
+                var frameQueue = _frameQueues[deviceNumber];
+
+                if (frameCount >= _frameCount)
+                {
+                    // Debug.Log("Frame: " + frameCount + " Device: " + deviceNumber);
+                    _frameCount = frameCount;
+                    frameQueue.Enqueue(new Frame(frameCount, isKeyFrame, compressionMethod, encodedDepthData, colorImageData));
+                }
+                else
+                {
+                    Debug.Log("Frame: " + frameCount + "has been delayed.");
+                }
             }
         }
 
-        public Frame GetFrame()
+        public Frame GetFrame(int deviceNumber)
         {
-            if (_frameQueue.Count > 0)
+            if (_frameQueues.ContainsKey(deviceNumber))
             {
-                return _frameQueue.Dequeue();
+                var frameQueue = _frameQueues[deviceNumber];
+                if (frameQueue.Count > 0)
+                {
+                    return frameQueue.Dequeue();
+                }
             }
-            else
-            {
-                return null;
-            }
+
+            return null;
         }
 
         public void RegisterTextureReceiver(int streamingClientId)

@@ -18,6 +18,7 @@ namespace VolumetricStreamingLite.Server
         NetDataWriter _dataWriter;
         Dictionary<int, HashSet<int>> _streamingReceivers;
 
+        Dictionary<int, int> _deviceCountDictionary;
         Dictionary<int, K4A.Calibration> _calibrationDictionary;
         Dictionary<int, K4A.CalibrationType> _calibrationTypeDictionary;
 
@@ -26,8 +27,9 @@ namespace VolumetricStreamingLite.Server
             _dataWriter = new NetDataWriter();
             _streamingReceivers = new Dictionary<int, HashSet<int>>();
 
-            _calibrationDictionary = new Dictionary<int, K4A.Calibration>();
+            _deviceCountDictionary = new Dictionary<int, int>();
             _calibrationTypeDictionary = new Dictionary<int, K4A.CalibrationType>();
+            _calibrationDictionary = new Dictionary<int, K4A.Calibration>();
 
             _liteNetLibServer.OnNetworkReceived += OnNetworkReceived;
             _liteNetLibServer.OnPeerConnectedHandler += OnPeerConnected;
@@ -57,13 +59,17 @@ namespace VolumetricStreamingLite.Server
                 streamingReceiver.Remove(disconnectedClientId);
             }
 
-            if (_calibrationDictionary.ContainsKey(disconnectedClientId))
+            if (_deviceCountDictionary.ContainsKey(disconnectedClientId))
             {
-                _calibrationDictionary.Remove(disconnectedClientId);
+                _deviceCountDictionary.Remove(disconnectedClientId);
             }
             if (_calibrationTypeDictionary.ContainsKey(disconnectedClientId))
             {
                 _calibrationTypeDictionary.Remove(disconnectedClientId);
+            }
+            if (_calibrationDictionary.ContainsKey(disconnectedClientId))
+            {
+                _calibrationDictionary.Remove(disconnectedClientId);
             }
         }
 
@@ -98,6 +104,8 @@ namespace VolumetricStreamingLite.Server
 
         void SetCalibration(int streamingClientId, NetPacketReader reader)
         {
+            int deviceCount = reader.GetInt();
+
             K4A.CalibrationType calibrationType = (K4A.CalibrationType)reader.GetInt();
 
             int dataLength = reader.GetInt();
@@ -109,6 +117,10 @@ namespace VolumetricStreamingLite.Server
 
             K4A.Calibration calibration = (K4A.Calibration)binaryFormatter.Deserialize(memoryStream);
 
+            if (!_deviceCountDictionary.ContainsKey(streamingClientId))
+            {
+                _deviceCountDictionary.Add(streamingClientId, deviceCount);
+            }
             if (!_calibrationTypeDictionary.ContainsKey(streamingClientId))
             {
                 _calibrationTypeDictionary.Add(streamingClientId, calibrationType);
@@ -137,6 +149,7 @@ namespace VolumetricStreamingLite.Server
                 return;
             }
 
+            int deviceCount = _deviceCountDictionary[streamingClientId];
             K4A.CalibrationType calibrationType = _calibrationTypeDictionary[streamingClientId];
             K4A.Calibration calibration = _calibrationDictionary[streamingClientId];
 
@@ -148,6 +161,7 @@ namespace VolumetricStreamingLite.Server
 
             _dataWriter.Reset();
             _dataWriter.Put((int)NetworkDataType.ReceiveCalibration);
+            _dataWriter.Put(deviceCount);
             _dataWriter.Put((int)calibrationType);
             _dataWriter.Put(serializedCalibration.Length);
             _dataWriter.Put(serializedCalibration);
@@ -161,6 +175,7 @@ namespace VolumetricStreamingLite.Server
         {
             // Debug.Log("SendDepthData: " + reader.UserDataSize);
 
+            int deviceNumber = reader.GetInt();
             int frameCount = reader.GetInt();
             bool isKeyFrame = reader.GetBool();
             int depthWidth = reader.GetInt();
@@ -173,6 +188,7 @@ namespace VolumetricStreamingLite.Server
 
             _dataWriter.Reset();
             _dataWriter.Put((int)NetworkDataType.ReceiveDepthData);
+            _dataWriter.Put(deviceNumber);
             _dataWriter.Put(frameCount);
             _dataWriter.Put(isKeyFrame);
             _dataWriter.Put(depthWidth);
@@ -191,6 +207,7 @@ namespace VolumetricStreamingLite.Server
         {
             // Debug.Log("SendDepthAndColorData: " + reader.UserDataSize);
 
+            int deviceNumber = reader.GetInt();
             int frameCount = reader.GetInt();
             bool isKeyFrame = reader.GetBool();
             int depthWidth = reader.GetInt();
@@ -210,6 +227,7 @@ namespace VolumetricStreamingLite.Server
 
             _dataWriter.Reset();
             _dataWriter.Put((int)NetworkDataType.ReceiveDepthAndColorData);
+            _dataWriter.Put(deviceNumber);
             _dataWriter.Put(frameCount);
             _dataWriter.Put(isKeyFrame);
             _dataWriter.Put(depthWidth);
