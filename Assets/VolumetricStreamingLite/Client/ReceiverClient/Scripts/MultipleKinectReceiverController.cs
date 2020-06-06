@@ -21,7 +21,7 @@ namespace VolumetricStreamingLite.Client
         [SerializeField] Button _RegisterReceiver;
         [SerializeField] Button _UnregisterReceiver;
 
-        public List<PointCloudRenderer> _PointCloudRendererList = new List<PointCloudRenderer>();
+        List<PointCloudRenderer> _PointCloudRendererList = new List<PointCloudRenderer>();
 
         int _PreviousStreamingClientId;
 
@@ -55,6 +55,12 @@ namespace VolumetricStreamingLite.Client
 
         void OnReceivedCalibration(int deviceCount, K4A.CalibrationType calibrationType, K4A.Calibration calibration)
         {
+            foreach (var pointCloudRenderer in _PointCloudRendererList)
+            {
+                DestroyImmediate(pointCloudRenderer.gameObject);
+            }
+            _PointCloudRendererList.Clear();
+
             Debug.Log("DeviceCount: " + deviceCount);
             for (int i = 0; i < deviceCount; i++)
             {

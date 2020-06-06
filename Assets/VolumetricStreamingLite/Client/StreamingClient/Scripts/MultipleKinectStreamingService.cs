@@ -54,8 +54,7 @@ namespace VolumetricStreamingLite.Client
 
         AzureKinectSensor _KinectSensor;
 
-        TemporalRVLEncoder _TrvlEncoder;
-        TemporalRVLDecoder _TrvlDecoder;
+        List<TemporalRVLEncoder> _TrvlEncoders = new List<TemporalRVLEncoder>();
 
         byte[] _EncodedDepthData;
         byte[] _EncodedColorImageData;
@@ -91,9 +90,6 @@ namespace VolumetricStreamingLite.Client
                 _DepthImageHeight = _KinectSensor.DepthImageHeight;
                 _DepthImageSize = _KinectSensor.DepthImageWidth * _KinectSensor.DepthImageHeight;
 
-                _TrvlEncoder = new TemporalRVLEncoder(_DepthImageSize, 10, 2);
-                _TrvlDecoder = new TemporalRVLDecoder(_DepthImageSize);
-
                 CameraCalibration deviceDepthCameraCalibration = _KinectSensor.DeviceCalibration.DepthCameraCalibration;
                 CameraCalibration deviceColorCameraCalibration = _KinectSensor.DeviceCalibration.ColorCameraCalibration;
 
@@ -104,6 +100,12 @@ namespace VolumetricStreamingLite.Client
                 _CalibrationType = K4A.CalibrationType.Depth; // Color to depth
 
                 var kinectSensors = _AzureKinectManager.SensorList;
+
+                for (int i = 0; i < kinectSensors.Count; i++)
+                {
+                    _TrvlEncoders.Add(new TemporalRVLEncoder(_DepthImageSize, 10, 2));
+                }
+
                 for (int i = 0; i < kinectSensors.Count; i++)
                 {
                     _DepthDataList.Add(new short[_DepthImageSize]);
@@ -184,7 +186,7 @@ namespace VolumetricStreamingLite.Client
                     if (_DepthCompressionMethod == CompressionMethod.TemporalRVL)
                     {
                         // Temporal RVL compression
-                        _TrvlEncoder.Encode(ref _DepthImageData, ref _EncodedDepthData, _KeyFrame);
+                        _TrvlEncoders[deviceNumber].Encode(ref _DepthImageData, ref _EncodedDepthData, _KeyFrame);
                     }
                     else if (_DepthCompressionMethod == CompressionMethod.RVL)
                     {

@@ -4,6 +4,7 @@
 using System.Collections.Generic;
 using UnityEngine;
 using DepthStreamCompression;
+// using DepthStreamCompression.NativePlugin;
 
 namespace VolumetricStreamingLite.Client
 {
@@ -14,10 +15,7 @@ namespace VolumetricStreamingLite.Client
         public int ClientId { get { return _ReceiverClient.ClientId ;} }
         public OnReceivedCalibrationDelegate OnReceivedCalibrationDelegate;
 
-        Texture2D _ColorImageTexture;
-        public Texture2D ColorImageTexture { get { return _ColorImageTexture; } }
-
-        TemporalRVLDecoder _TrvlDecoder;
+        List<TemporalRVLDecoder> _TrvlDecoders = new List<TemporalRVLDecoder>();
         int _DepthImageSize = 0;
         List<short[]> _DecodedDepthData;
         public List<short[]> DepthImageData => _DecodedDepthData;
@@ -47,8 +45,6 @@ namespace VolumetricStreamingLite.Client
         public void StopReceiving()
         {
             _Receiving = false;
-            _DecodedDepthData = null;
-            _ColorImageData = null;
             _ReceiverClient.OnReceivedCalibration -= OnReceivedCalibrationDelegate;
             _ReceiverClient.OnReceivedCalibration -= OnReceivedCalibration;
             Debug.Log("***** Stop Receiving *****");
@@ -66,14 +62,14 @@ namespace VolumetricStreamingLite.Client
 
         void OnReceivedCalibration(int deviceCount, K4A.CalibrationType calibrationType, K4A.Calibration calibration)
         {
+            int depthImageSize = calibration.DepthCameraCalibration.resolutionWidth * calibration.DepthCameraCalibration.resolutionHeight;
             _DecodedDepthData = new List<short[]>(deviceCount);
             _ColorImageData = new List<byte[]>(deviceCount);
             for (int i = 0; i < deviceCount; i++)
             {
-                _DecodedDepthData.Add(new short[0]);
+                _DecodedDepthData.Add(new short[depthImageSize]);
                 _ColorImageData.Add(new byte[0]);
             }
-            Debug.Log("List.Count@MultipleKinectService: " + _DecodedDepthData.Count);
         }
 
         void Update()
@@ -89,16 +85,12 @@ namespace VolumetricStreamingLite.Client
             if (_DepthImageSize != _ReceiverClient.DepthImageSize)
             {
                 _DepthImageSize = _ReceiverClient.DepthImageSize;
-                _TrvlDecoder = new TemporalRVLDecoder(_DepthImageSize);
-            }
+                _TrvlDecoders.Clear();
 
-            if (_ColorImageTexture == null || 
-                _ColorImageTexture.width != _ReceiverClient.ColorWidth ||
-                _ColorImageTexture.height != _ReceiverClient.ColorHeight)
-            {
-                int width = _ReceiverClient.ColorWidth;
-                int height = _ReceiverClient.ColorHeight;
-                _ColorImageTexture = new Texture2D(width, height, TextureFormat.BGRA32, false);
+                for (int deviceNumber = 0; deviceNumber < _ReceiverClient.DeviceCount; deviceNumber++)
+                {
+                    _TrvlDecoders.Add(new TemporalRVLDecoder(_DepthImageSize));
+                }
             }
 
             for (int deviceNumber = 0; deviceNumber < _ReceiverClient.DeviceCount; deviceNumber++)
@@ -111,8 +103,9 @@ namespace VolumetricStreamingLite.Client
 
                     if (frame.CompressionMethod == CompressionMethod.TemporalRVL)
                     {
-                        // Temporal RVL decompression
-                        _DecodedDepthData[deviceNumber] = _TrvlDecoder.Decode(encodedDepthData, isKeyFrame);
+                        _DecodedDepthData[deviceNumber] = _TrvlDecoders[deviceNumber].Decode(encodedDepthData, isKeyFrame);
+                        // short[] output = _DecodedDepthData[deviceNumber];
+                        // _TrvlDecoders[deviceNumber].Decode(ref encodedDepthData, ref output, isKeyFrame);
                     }
                     else if (frame.CompressionMethod == CompressionMethod.RVL)
                     {
@@ -121,8 +114,6 @@ namespace VolumetricStreamingLite.Client
                     }
 
                     _ColorImageData[deviceNumber] = frame.ColorImageData;
-                    _ColorImageTexture.LoadImage(_ColorImageData[deviceNumber]);
-                    _ColorImageTexture.Apply();
                 }
             }
         }
